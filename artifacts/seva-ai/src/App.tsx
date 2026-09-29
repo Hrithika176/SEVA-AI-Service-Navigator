@@ -1,0 +1,284 @@
+import { type ReactNode, useMemo, useState } from 'react';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import {
+  Activity as ActivityIcon, ArrowRight, BarChart3, Bell, BookOpen, Check, CheckCircle2,
+  ChevronRight, CircleAlert, ClipboardCheck, Clock3, ExternalLink, FileText, Filter,
+  FolderOpen, Landmark, LayoutDashboard, ListChecks,
+  LockKeyhole, Menu, MoreHorizontal, Plus, RefreshCw, Search, Send,
+  Settings2, ShieldCheck, Sparkles, Target, X, Zap,
+} from 'lucide-react';
+import {
+  getGetServiceQueryKey,
+  getListDocumentsQueryKey,
+  getListJourneysQueryKey,
+  getListNotificationsQueryKey,
+  useAnalyzeRequest,
+  useCreateDocument,
+  useCreateJourney,
+  useDeleteDocument,
+  useGetAgentSession,
+  useGetAnalyticsSummary,
+  useGetDashboardSummary,
+  useGetService,
+  useGetActivity,
+  useHealthCheck,
+  useListDocuments,
+  useListJourneys,
+  useListNotifications,
+  useListServices,
+  useMarkNotificationRead,
+  useUpdateDocument,
+  useUpdateJourney,
+  type Activity,
+  type AnalyticsSummary,
+  type DashboardSummary,
+  type Journey,
+  type Notification,
+  type Service,
+  type UserDocument,
+} from '@workspace/api-client-react';
+import { Link, Route, Switch, useLocation, useRoute, Router as WouterRouter } from 'wouter';
+import NotFound from '@/pages/not-found';
+
+const queryClient = new QueryClient();
+const cx = (...classes: Array<string | false | undefined>) => classes.filter(Boolean).join(' ');
+const parseDate = (value?: string) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+const dateLabel = (value?: string) => {
+  const parsed = parseDate(value);
+  return parsed
+    ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(parsed)
+    : value || 'Not available';
+};
+const timeLabel = (value?: string) => {
+  const parsed = parseDate(value);
+  return parsed
+    ? new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' }).format(parsed)
+    : value || 'Recently';
+};
+
+function Logo({ compact = false }: { compact?: boolean }) {
+  return (
+    <Link href="/" className={cx('flex items-center gap-3 focus-ring rounded-xl', compact && 'justify-center')} data-testid="link-logo">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+        <Landmark size={20} strokeWidth={2.2} />
+      </span>
+      {!compact && <span><span className="font-display block text-lg font-extrabold tracking-tight">SEVA</span><span className="block text-[10px] font-bold uppercase tracking-[.22em] text-sidebar-foreground/60">public service guide</span></span>}
+    </Link>
+  );
+}
+
+const navItems = [
+  { href: '/', label: 'Overview', icon: LayoutDashboard },
+  { href: '/discover', label: 'Discover services', icon: Search },
+  { href: '/my-services', label: 'My services', icon: ListChecks },
+  { href: '/documents', label: 'Documents', icon: FolderOpen },
+  { href: '/agent', label: 'Guided agent', icon: Sparkles },
+];
+const secondaryNav = [
+  { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '/analytics', label: 'Insights', icon: BarChart3 },
+  { href: '/profile', label: 'Preferences', icon: Settings2 },
+];
+
+function Shell({ children }: { children: ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [location] = useLocation();
+  const { data: notifications } = useListNotifications();
+  const unread = notifications?.filter((item) => item.unread).length ?? 0;
+  const active = (href: string) => href === '/' ? location === '/' : location.startsWith(href);
+  return (
+    <div className="min-h-[100dvh] bg-background">
+      <aside className={cx('fixed inset-y-0 left-0 z-40 flex w-[252px] flex-col bg-sidebar px-4 py-5 text-sidebar-foreground transition-transform duration-300 lg:translate-x-0', mobileOpen ? 'translate-x-0' : '-translate-x-full')}>
+        <div className="flex items-center justify-between px-2"><Logo /><button className="rounded-lg p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent lg:hidden" onClick={() => setMobileOpen(false)} data-testid="button-close-sidebar" aria-label="Close navigation"><X size={18} /></button></div>
+        <div className="mt-9 px-2 text-[10px] font-bold uppercase tracking-[.2em] text-sidebar-foreground/45">Your civic desk</div>
+        <nav className="mt-3 space-y-1" aria-label="Primary navigation">
+          {navItems.map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={cx('group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors', active(href) ? 'bg-sidebar-primary text-white' : 'text-sidebar-foreground/72 hover:bg-sidebar-accent hover:text-white')} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={18} /><span>{label}</span>{href === '/agent' && <span className="ml-auto size-1.5 rounded-full bg-accent" />}</Link>)}
+        </nav>
+        <div className="mt-8 px-2 text-[10px] font-bold uppercase tracking-[.2em] text-sidebar-foreground/45">Keep informed</div>
+        <nav className="mt-3 space-y-1">
+          {secondaryNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={cx('group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors', active(href) ? 'bg-sidebar-primary text-white' : 'text-sidebar-foreground/72 hover:bg-sidebar-accent hover:text-white')} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={18} /><span>{label}</span>{label === 'Notifications' && unread > 0 && <span className="ml-auto rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-foreground">{unread}</span>}</Link>)}
+        </nav>
+        <div className="mt-auto rounded-2xl border border-sidebar-border bg-sidebar-accent/50 p-4">
+          <div className="flex items-center gap-2 text-xs font-bold"><ShieldCheck size={16} className="text-accent" /> Source-first by design</div>
+          <p className="mt-2 text-xs leading-5 text-sidebar-foreground/60">We show where information comes from, when it was checked, and what still needs confirmation.</p>
+          <Link href="/profile" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline" data-testid="link-privacy-note">Privacy & preferences <ArrowRight size={13} /></Link>
+        </div>
+      </aside>
+      {mobileOpen && <button className="fixed inset-0 z-30 bg-sidebar/45 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation overlay" data-testid="button-overlay" />}
+      <div className="lg:pl-[252px]">
+        <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/80 bg-background/90 px-4 backdrop-blur-md sm:px-7">
+          <div className="flex items-center gap-3"><button className="rounded-xl border border-border bg-card p-2 text-foreground lg:hidden" onClick={() => setMobileOpen(true)} data-testid="button-open-sidebar" aria-label="Open navigation"><Menu size={19} /></button><div className="hidden text-xs font-semibold text-muted-foreground sm:block">India / <span className="text-foreground">{location === '/' ? 'overview' : location.slice(1).replaceAll('/', ' / ')}</span></div></div>
+          <div className="flex items-center gap-2">
+            <Link href="/notifications" className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground" data-testid="link-header-notifications" aria-label="Notifications"><Bell size={19} />{unread > 0 && <span className="absolute right-1.5 top-1.5 size-2 rounded-full border-2 border-background bg-accent" />}</Link>
+            <Link href="/profile" className="flex items-center gap-2 rounded-xl border border-border bg-card px-2 py-1.5 text-left hover:border-primary/40" data-testid="link-header-profile"><span className="grid size-7 place-items-center rounded-lg bg-secondary text-xs font-bold text-foreground">AK</span><span className="hidden pr-1 text-xs font-bold sm:block">Aarav K.</span></Link>
+          </div>
+        </header>
+        <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-7 lg:px-9">{children}</main>
+      </div>
+      <nav className="fixed inset-x-3 bottom-3 z-30 flex items-center justify-around rounded-2xl border border-border bg-card/95 p-2 shadow-xl backdrop-blur lg:hidden">
+        {[navItems[0], navItems[1], navItems[2], navItems[3]].map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={cx('flex min-w-0 flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-bold', active(href) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')} data-testid={`link-mobile-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={17} /><span className="max-w-[70px] truncate">{label === 'Discover services' ? 'Discover' : label}</span></Link>)}
+      </nav>
+    </div>
+  );
+}
+
+function PageHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) {
+  return <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.2em] text-primary"><span className="size-1.5 rounded-full bg-accent" />{eyebrow}</div><h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground sm:text-[38px]">{title}</h1>{description && <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>}</div>{action}</div>;
+}
+
+function StatCard({ label, value, note, icon: Icon, tone = 'teal' }: { label: string; value: string | number; note: string; icon: typeof ActivityIcon; tone?: 'teal' | 'orange' | 'navy' }) {
+  return <div className="rounded-2xl border border-card-border bg-card p-5 shadow-[0_8px_30px_rgba(27,55,70,.04)] transition-transform hover:-translate-y-0.5"><div className="flex items-start justify-between"><span className={cx('grid size-9 place-items-center rounded-xl', tone === 'teal' ? 'bg-primary/10 text-primary' : tone === 'orange' ? 'bg-accent/20 text-foreground' : 'bg-secondary text-foreground')}><Icon size={18} /></span><span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">This month</span></div><div className="mt-4 font-display text-3xl font-extrabold">{value}</div><div className="mt-1 text-xs font-semibold text-muted-foreground">{label}</div><div className="mt-3 text-xs text-primary">{note}</div></div>;
+}
+
+function QueryState({ loading, error, onRetry, children, label = 'information' }: { loading: boolean; error: unknown; onRetry?: () => void; children: ReactNode; label?: string }) {
+  if (loading) return <div className="grid gap-4 sm:grid-cols-3" aria-label={`Loading ${label}`}><div className="h-36 animate-shimmer rounded-2xl" /><div className="h-36 animate-shimmer rounded-2xl" /><div className="h-36 animate-shimmer rounded-2xl" /></div>;
+  if (error) return <div className="rounded-2xl border border-destructive/25 bg-destructive/5 p-7 text-center"><CircleAlert className="mx-auto text-destructive" size={26} /><h3 className="mt-3 font-display font-bold">We could not load this right now</h3><p className="mt-1 text-sm text-muted-foreground">Your saved information is safe. Try again in a moment.</p>{onRetry && <button onClick={onRetry} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-sm font-bold text-background" data-testid="button-retry"><RefreshCw size={15} /> Try again</button>}</div>;
+  return <>{children}</>;
+}
+
+function Home() {
+  const [, setLocation] = useLocation();
+  const [request, setRequest] = useState('');
+  const [demoResult, setDemoResult] = useState<{ category?: string; disclaimer?: string; service_ids?: string[]; missing_information?: string[] }>();
+  const params = useMemo(() => ({}), []);
+  const summaryQuery = useGetDashboardSummary();
+  const servicesQuery = useListServices(params);
+  const activityQuery = useGetActivity();
+  const health = useHealthCheck();
+  const analyze = useAnalyzeRequest();
+  const summary: DashboardSummary | undefined = summaryQuery.data;
+  const services = (servicesQuery.data ?? []).filter((item) => item.active).slice(0, 3);
+  const activities: Activity[] = activityQuery.data ?? [];
+  const submitRequest = () => {
+    if (request.trim().length < 3) { setLocation('/agent'); return; }
+    analyze.mutate({ data: { request: request.trim() } }, { onSuccess: (result) => setDemoResult(result) });
+  };
+  return <div className="space-y-8 animate-rise">
+    <section className="warm-glow civic-grid relative overflow-hidden rounded-[28px] border border-card-border px-6 py-8 sm:px-10 sm:py-11">
+      <div className="relative max-w-3xl"><div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.16em] text-primary"><span className="size-2 animate-pulse-soft rounded-full bg-primary" />A calmer way to access public services</div><h1 className="font-display max-w-2xl text-4xl font-extrabold leading-[1.04] tracking-[-.04em] sm:text-6xl">One clear next step,<br /><span className="text-primary">not a maze of portals.</span></h1><p className="mt-5 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">SEVA helps you find government services, understand what to prepare, and move forward with information you can verify.</p><div className="mt-7 flex max-w-2xl flex-col gap-2 rounded-2xl border border-card-border bg-card p-2 shadow-lg sm:flex-row"><div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search size={20} className="shrink-0 text-primary" /><input value={request} onChange={(e) => setRequest(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitRequest()} className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Tell us what you need help with..." data-testid="input-home-request" /><span className="hidden rounded-md bg-muted px-2 py-1 font-mono text-[10px] text-muted-foreground sm:block">Enter</span></div><button onClick={submitRequest} disabled={analyze.isPending} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60" data-testid="button-home-request">{analyze.isPending ? 'Reviewing...' : 'Find my next step'} <ArrowRight size={16} /></button></div><div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-muted-foreground"><span className="inline-flex items-center gap-1.5"><LockKeyhole size={13} className="text-primary" /> No hidden reasoning</span><span className="inline-flex items-center gap-1.5"><ShieldCheck size={13} className="text-primary" /> Official sources shown</span></div></div><div className="absolute -right-16 -top-14 hidden size-72 rounded-full border-[22px] border-accent/15 sm:block" /><div className="absolute right-9 top-16 hidden size-36 rounded-full border border-primary/20 sm:block" /></section>
+    {demoResult && <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5"><div className="flex items-start justify-between gap-4"><div><div className="text-[10px] font-bold uppercase tracking-[.18em] text-primary">Demo match ready</div><h2 className="mt-1 font-display text-lg font-bold">{demoResult.category || 'A few possible services'}</h2><p className="mt-1 text-sm text-muted-foreground">{demoResult.disclaimer || 'Review each official source before you apply.'}</p></div><button onClick={() => setDemoResult(undefined)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-card" data-testid="button-dismiss-demo"><X size={17} /></button></div><div className="mt-4 flex flex-wrap gap-2">{demoResult.service_ids?.map((id) => <Link href={`/services/${id}`} key={id} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-card px-3 py-2 text-xs font-bold text-primary" data-testid={`link-demo-service-${id}`}>Review service <ArrowRight size={13} /></Link>)}{demoResult.missing_information?.map((item) => <span key={item} className="rounded-lg bg-accent/20 px-3 py-2 text-xs font-semibold">{item}</span>)}</div></div>}
+    <QueryState loading={summaryQuery.isLoading} error={summaryQuery.error} onRetry={() => summaryQuery.refetch()} label="overview"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active journeys" value={summary?.active_journeys ?? 0} note="Keep moving at your pace" icon={Target} /><StatCard label="Saved services" value={summary?.saved_services ?? 0} note="Your shortlist, in one place" icon={BookOpen} tone="orange" /><StatCard label="Document readiness" value={`${summary?.document_readiness ?? 0}%`} note="Based on your checklist" icon={ClipboardCheck} /><StatCard label="Pending steps" value={summary?.pending_steps ?? 0} note="Small steps add up" icon={Clock3} tone="navy" /></div></QueryState>
+    <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]"><section className="rounded-2xl border border-card-border bg-card p-5 sm:p-6"><div className="flex items-center justify-between"><div><div className="text-[10px] font-bold uppercase tracking-[.18em] text-muted-foreground">Suggested for you</div><h2 className="mt-1 font-display text-xl font-extrabold">Start with a service</h2></div><Link href="/discover" className="inline-flex items-center gap-1 text-xs font-bold text-primary" data-testid="link-see-all-services">See all <ArrowRight size={14} /></Link></div><QueryState loading={servicesQuery.isLoading} error={servicesQuery.error} onRetry={() => servicesQuery.refetch()} label="services"><div className="mt-5 grid gap-3">{services.length ? services.map((service) => <ServiceRow key={service.id} service={service} />) : <EmptyState icon={Landmark} title="Your service shelf is ready" body="Search for a service when you are ready to begin." actionLabel="Discover services" actionHref="/discover" />}</div></QueryState></section><section className="rounded-2xl border border-card-border bg-card p-5 sm:p-6"><div className="flex items-center gap-2"><ActivityIcon size={16} className="text-primary" /><h2 className="font-display text-lg font-extrabold">Recent activity</h2></div><QueryState loading={activityQuery.isLoading} error={activityQuery.error} onRetry={() => activityQuery.refetch()} label="activity"><div className="mt-5 space-y-5">{activities.slice(0, 4).map((item) => <div key={item.id} className="flex gap-3"><div className="mt-1 grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-foreground"><Check size={13} /></div><div><p className="text-sm font-bold">{item.label}</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.detail}</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">{timeLabel(item.time)}</p></div></div>)}{!activities.length && <EmptyState icon={ActivityIcon} title="No activity yet" body="Your first search or saved journey will appear here." />}</div></QueryState></section></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/50 px-5 py-4 text-sm"><div className="flex items-center gap-3"><span className={cx('size-2 rounded-full', health.isError ? 'bg-destructive' : 'bg-primary')} /><span className="font-semibold">SEVA service status: {health.isError ? 'Needs attention' : health.isLoading ? 'Checking' : 'Operational'}</span></div><span className="text-xs text-muted-foreground">Information is a guide, not a promise of eligibility.</span></div>
+  </div>;
+}
+
+function ServiceRow({ service }: { service: Service }) {
+  return <Link href={`/services/${service.id}`} className="group flex items-center gap-4 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/35 hover:bg-primary/[.03]" data-testid={`card-service-${service.id}`}><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-foreground"><Landmark size={18} /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-sm font-bold">{service.name}</h3>{service.is_demo && <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">Demo information</span>}</div><p className="mt-1 truncate text-xs text-muted-foreground">{service.description}</p><div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold text-muted-foreground"><span>{service.category}</span><span>·</span><span>{service.level}</span></div></div><ChevronRight size={17} className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" /></Link>;
+}
+
+function EmptyState({ icon: Icon, title, body, actionLabel, actionHref }: { icon: typeof Search; title: string; body: string; actionLabel?: string; actionHref?: string }) {
+  return <div className="rounded-2xl border border-dashed border-border bg-muted/35 p-7 text-center"><span className="mx-auto grid size-11 place-items-center rounded-2xl bg-secondary text-primary"><Icon size={21} /></span><h3 className="mt-3 font-display font-bold">{title}</h3><p className="mx-auto mt-1 max-w-sm text-sm leading-5 text-muted-foreground">{body}</p>{actionLabel && actionHref && <Link href={actionHref} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground" data-testid="link-empty-action">{actionLabel}<ArrowRight size={14} /></Link>}</div>;
+}
+
+function Discover() {
+  const paramsFromUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const [q, setQ] = useState(paramsFromUrl?.get('q') ?? '');
+  const [category, setCategory] = useState('');
+  const [state, setState] = useState('');
+  const params = useMemo(() => ({ q: q || undefined, category: category || undefined, state: state || undefined }), [q, category, state]);
+  const query = useListServices(params);
+  const services = query.data ?? [];
+  const categories = Array.from(new Set(services.map((item) => item.category).filter(Boolean)));
+  const states = Array.from(new Set(services.map((item) => item.state).filter(Boolean)));
+  return <div className="animate-rise"><PageHeading eyebrow="Service directory" title="Find your next service" description="Search a growing directory of public services. Compare details, prepare documents, and always open the official source before applying." action={<div className="hidden items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-bold text-primary sm:flex"><ShieldCheck size={14} /> Sources are visible</div>} /><div className="rounded-2xl border border-card-border bg-card p-3 shadow-sm sm:p-4"><div className="flex flex-col gap-3 lg:flex-row"><div className="flex flex-1 items-center gap-3 rounded-xl border border-border bg-background px-3"><Search size={18} className="text-primary" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by service, need, or authority" className="w-full bg-transparent py-3 text-sm outline-none" data-testid="input-service-search" /><span className="hidden font-mono text-[10px] text-muted-foreground sm:block">FILTER</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3"><select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold outline-none" data-testid="select-category"><option value="">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select><select value={state} onChange={(e) => setState(e.target.value)} className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold outline-none" data-testid="select-state"><option value="">All locations</option>{states.map((item) => <option key={item} value={item}>{item}</option>)}</select><button onClick={() => { setQ(''); setCategory(''); setState(''); }} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-muted" data-testid="button-clear-filters"><Filter size={14} /> Clear</button></div></div></div><div className="mt-6 flex items-center justify-between"><p className="text-xs font-semibold text-muted-foreground">{query.isLoading ? 'Looking across services...' : `${services.length} services found`}</p>{q && <p className="text-xs text-muted-foreground">Showing results for <span className="font-bold text-foreground">“{q}”</span></p>}</div><div className="mt-3"><QueryState loading={query.isLoading} error={query.error} onRetry={() => query.refetch()} label="service directory"><div className="grid gap-4 md:grid-cols-2">{services.map((service) => <ServiceCard key={service.id} service={service} />)}</div>{!services.length && <EmptyState icon={Search} title="No close matches yet" body="Try a broader phrase, or clear the filters to see the full service directory." actionLabel="Clear filters" actionHref="/discover" />}</QueryState></div></div>;
+}
+
+function ServiceCard({ service }: { service: Service }) {
+  return <Link href={`/services/${service.id}`} className="group rounded-2xl border border-card-border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md" data-testid={`card-discover-service-${service.id}`}><div className="flex items-start justify-between gap-3"><span className="grid size-10 place-items-center rounded-xl bg-secondary text-primary"><Landmark size={19} /></span>{service.is_demo ? <span className="rounded-full bg-accent/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">Demo information</span> : <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary"><ShieldCheck size={12} /> Verified</span>}</div><h2 className="mt-5 font-display text-lg font-extrabold group-hover:text-primary">{service.name}</h2><p className="mt-2 line-clamp-2 text-sm leading-5 text-muted-foreground">{service.description}</p><div className="mt-5 grid grid-cols-2 gap-3 border-t border-border/70 pt-4 text-xs"><div><p className="text-muted-foreground">Authority</p><p className="mt-1 font-bold">{service.authority}</p></div><div><p className="text-muted-foreground">Last checked</p><p className="mt-1 font-bold">{dateLabel(service.last_verified)}</p></div></div><div className="mt-4 flex items-center justify-between text-xs font-bold text-primary"><span>{service.category} · {service.level}</span><ArrowRight size={15} className="transition-transform group-hover:translate-x-1" /></div></Link>;
+}
+
+function ServiceDetail() {
+  const [, setLocation] = useLocation();
+  const [, params] = useRoute('/services/:id');
+  const id = params?.id ?? '';
+  const query = useGetService(id, { query: { queryKey: getGetServiceQueryKey(id) } });
+  const createJourney = useCreateJourney();
+  const qc = useQueryClient();
+  const service = query.data;
+  const start = () => service && createJourney.mutate({ data: { service_id: service.id } }, { onSuccess: () => { qc.invalidateQueries({ queryKey: getListJourneysQueryKey() }); setLocation('/my-services'); } });
+  return <div className="animate-rise"><Link href="/discover" className="mb-6 inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-primary" data-testid="link-back-discover"><ChevronRight size={15} className="rotate-180" /> Back to discover</Link><QueryState loading={query.isLoading} error={query.error} onRetry={() => query.refetch()} label="service details">{service && <><div className="rounded-[26px] border border-card-border bg-card p-6 sm:p-9"><div className="flex flex-col justify-between gap-6 md:flex-row"><div className="max-w-3xl"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-primary">{service.category}</span>{service.is_demo && <span className="rounded-full bg-accent/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em]">Demo information</span>}</div><h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-5xl">{service.name}</h1><p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">{service.description}</p></div><div className="flex shrink-0 flex-col gap-2 sm:flex-row md:flex-col"><button onClick={start} disabled={createJourney.isPending} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-60" data-testid="button-start-journey">{createJourney.isPending ? 'Saving...' : 'Start a journey'} <ArrowRight size={16} /></button><a href={service.official_url} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-bold hover:bg-muted" data-testid="link-official-source">Official source <ExternalLink size={15} /></a></div></div><div className="mt-8 grid gap-3 border-t border-border pt-5 text-sm sm:grid-cols-3"><DetailMeta label="Authority" value={service.authority} /><DetailMeta label="Coverage" value={`${service.state} · ${service.level}`} /><DetailMeta label="Last verified" value={dateLabel(service.last_verified)} /></div></div><div className="mt-6 grid gap-6 lg:grid-cols-[1fr_.72fr]"><div className="rounded-2xl border border-card-border bg-card p-6"><SectionTitle icon={ClipboardCheck} title="Before you apply" /><div className="mt-5 grid gap-5 sm:grid-cols-2"><InfoList title="Eligibility notes" items={[service.eligibility]} /><InfoList title="Requirements" items={service.requirements} /><InfoList title="Documents to prepare" items={service.documents} /><InfoList title="Application method" items={[service.application_method]} /></div></div><div className="rounded-2xl border border-primary/20 bg-primary/[.04] p-6"><SectionTitle icon={ShieldCheck} title="Source & safety" /><p className="mt-4 text-sm leading-6 text-muted-foreground">This page is a navigation aid. The official authority decides eligibility, documents, and outcomes.</p><div className="mt-5 rounded-xl border border-border bg-card p-4"><div className="flex items-start gap-3"><span className="grid size-8 place-items-center rounded-lg bg-secondary text-primary"><Landmark size={16} /></span><div className="min-w-0"><p className="text-xs font-bold text-muted-foreground">Source</p><p className="mt-1 break-words text-sm font-bold">{service.source_name}</p><p className="mt-1 text-xs text-muted-foreground">Checked {dateLabel(service.last_verified)}</p></div></div><a href={service.official_url} target="_blank" rel="noreferrer" className="mt-4 flex items-center justify-between rounded-lg bg-primary px-3 py-2.5 text-xs font-bold text-primary-foreground" data-testid="link-source-detail">Open official source <ExternalLink size={14} /></a></div></div></div></>}</QueryState></div>;
+}
+
+function DetailMeta({ label, value }: { label: string; value: string }) { return <div><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 font-bold">{value || 'Not available'}</p></div>; }
+function SectionTitle({ icon: Icon, title }: { icon: typeof Check; title: string }) { return <div className="flex items-center gap-2"><span className="grid size-8 place-items-center rounded-lg bg-secondary text-primary"><Icon size={16} /></span><h2 className="font-display text-lg font-extrabold">{title}</h2></div>; }
+function InfoList({ title, items }: { title: string; items: string[] }) { return <div><h3 className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">{title}</h3><ul className="mt-3 space-y-2">{(items.length ? items : ['No additional information listed']).map((item, index) => <li key={`${item}-${index}`} className="flex gap-2 text-sm leading-5"><CheckCircle2 size={15} className="mt-0.5 shrink-0 text-primary" />{item}</li>)}</ul></div>; }
+
+function MyServices() {
+  const journeysQuery = useListJourneys();
+  const updateJourney = useUpdateJourney();
+  const qc = useQueryClient();
+  const journeys: Journey[] = journeysQuery.data ?? [];
+  const update = (journey: Journey) => updateJourney.mutate({ id: journey.id, data: { status: journey.status === 'completed' ? 'active' : 'completed', progress: journey.status === 'completed' ? journey.progress : 100 } }, { onSuccess: () => qc.invalidateQueries({ queryKey: getListJourneysQueryKey() }) });
+  return <div className="animate-rise"><PageHeading eyebrow="Your workspace" title="My services" description="Keep track of the services you have saved and the next action for each journey." action={<Link href="/discover" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground" data-testid="link-add-service"><Plus size={15} /> Add a service</Link>} /><QueryState loading={journeysQuery.isLoading} error={journeysQuery.error} onRetry={() => journeysQuery.refetch()} label="journeys"><div className="grid gap-4 lg:grid-cols-2">{journeys.map((journey) => <JourneyCard key={journey.id} journey={journey} onUpdate={() => update(journey)} pending={updateJourney.isPending} />)}</div>{!journeys.length && <EmptyState icon={ListChecks} title="No journeys started" body="Find a service and save it here. You can return when it suits you." actionLabel="Discover services" actionHref="/discover" />}</QueryState><div className="mt-8 rounded-2xl border border-border bg-secondary/45 p-5"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-primary" size={18} /><div><p className="text-sm font-bold">A note on outcomes</p><p className="mt-1 text-xs leading-5 text-muted-foreground">SEVA helps you prepare and navigate. It does not submit applications or determine whether you qualify.</p></div></div></div></div>;
+}
+function JourneyCard({ journey, onUpdate, pending }: { journey: Journey; onUpdate: () => void; pending: boolean }) { return <div className="rounded-2xl border border-card-border bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><span className={cx('rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', journey.status === 'completed' ? 'bg-primary/10 text-primary' : 'bg-accent/20')}>{journey.status}</span><h2 className="mt-3 font-display text-xl font-extrabold">{journey.service_name}</h2></div><button className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label={`More actions for ${journey.service_name}`} data-testid={`button-journey-more-${journey.id}`}><MoreHorizontal size={18} /></button></div><div className="mt-5"><div className="mb-2 flex justify-between text-xs font-bold"><span>Journey progress</span><span className="text-primary">{journey.progress}%</span></div><div className="h-2 rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, journey.progress)}%` }} /></div></div><div className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-2"><div><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current stage</p><p className="mt-1 text-sm font-semibold">{journey.current_stage}</p></div><div><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next action</p><p className="mt-1 text-sm font-semibold">{journey.next_action}</p></div></div><div className="mt-5 flex items-center justify-between"><span className="text-[11px] text-muted-foreground">Updated {timeLabel(journey.last_activity)}</span><button onClick={onUpdate} disabled={pending} className="inline-flex items-center gap-2 rounded-lg border border-primary/25 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/5 disabled:opacity-50" data-testid={`button-update-journey-${journey.id}`}>{journey.status === 'completed' ? 'Reopen journey' : 'Mark complete'} <Check size={14} /></button></div></div>; }
+
+function Documents() {
+  const query = useListDocuments();
+  const create = useCreateDocument();
+  const update = useUpdateDocument();
+  const remove = useDeleteDocument();
+  const qc = useQueryClient();
+  const [formOpen, setFormOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('Identity');
+  const docs: UserDocument[] = query.data ?? [];
+  const refresh = () => qc.invalidateQueries({ queryKey: getListDocumentsQueryKey() });
+  const add = () => { if (!name.trim()) return; create.mutate({ data: { name: name.trim(), category } }, { onSuccess: () => { setName(''); setFormOpen(false); refresh(); } }); };
+  const toggle = (doc: UserDocument) => update.mutate({ id: doc.id, data: { status: doc.status === 'ready' ? 'needs_review' : 'ready' } }, { onSuccess: refresh });
+  return <div className="animate-rise"><PageHeading eyebrow="Readiness desk" title="Documents" description="Keep a lightweight checklist of what you may need. SEVA does not store document files here." action={<button onClick={() => setFormOpen((open) => !open)} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground" data-testid="button-add-document"><Plus size={15} /> Add document</button>} />{formOpen && <div className="mb-5 rounded-2xl border border-primary/20 bg-primary/[.04] p-5"><div className="grid gap-3 sm:grid-cols-[1fr_200px_auto]"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Document name" className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none" data-testid="input-document-name" /><select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none" data-testid="select-document-category"><option>Identity</option><option>Address</option><option>Income</option><option>Education</option><option>Other</option></select><button onClick={add} disabled={create.isPending} className="rounded-xl bg-foreground px-4 py-2.5 text-xs font-bold text-background disabled:opacity-50" data-testid="button-save-document">{create.isPending ? 'Adding...' : 'Add to checklist'}</button></div></div>}<QueryState loading={query.isLoading} error={query.error} onRetry={() => query.refetch()} label="documents"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{docs.map((doc) => <div key={doc.id} className="rounded-2xl border border-card-border bg-card p-5 shadow-sm"><div className="flex items-start justify-between"><span className="grid size-10 place-items-center rounded-xl bg-secondary text-primary"><FileText size={19} /></span><span className={cx('rounded-full px-2 py-1 text-[10px] font-bold uppercase', doc.status === 'ready' ? 'bg-primary/10 text-primary' : 'bg-accent/20')}>{doc.status}</span></div><h2 className="mt-4 font-display font-extrabold">{doc.name}</h2><p className="mt-1 text-xs text-muted-foreground">{doc.category} · {dateLabel(doc.updated_at)}</p><div className="mt-5 flex gap-2"><button onClick={() => toggle(doc)} disabled={update.isPending} className="flex-1 rounded-lg border border-primary/25 py-2 text-xs font-bold text-primary hover:bg-primary/5" data-testid={`button-toggle-document-${doc.id}`}>{doc.status === 'ready' ? 'Needs review' : 'Mark ready'}</button><button onClick={() => remove.mutate({ id: doc.id }, { onSuccess: refresh })} disabled={remove.isPending} className="rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-destructive/5 hover:text-destructive" data-testid={`button-delete-document-${doc.id}`} aria-label={`Remove ${doc.name}`}><X size={14} /></button></div></div>)}</div>{!docs.length && <EmptyState icon={FolderOpen} title="Your checklist is empty" body="Add a document you already have or need to locate. Only readiness status is tracked." actionLabel="Add your first document" actionHref="/documents" />}</QueryState></div>;
+}
+
+function Agent() {
+  const session = useGetAgentSession();
+  const analyze = useAnalyzeRequest();
+  const services = useListServices();
+  const [request, setRequest] = useState('');
+  const [result, setResult] = useState<{ category?: string; disclaimer?: string; service_ids?: string[]; missing_information?: string[] }>();
+  const submit = () => { if (request.trim().length >= 3) analyze.mutate({ data: { request: request.trim() } }, { onSuccess: setResult }); };
+  const eventIcon = (status: string) => status === 'complete' ? <Check size={14} /> : status === 'active' ? <span className="size-2 animate-pulse-soft rounded-full bg-accent" /> : <Clock3 size={14} />;
+  return <div className="animate-rise"><PageHeading eyebrow="Guided agent" title="A safe second pair of eyes" description="Describe what you need in plain language. SEVA will return a category, possible services, and the information you may still need. It will not make decisions for you." /><div className="grid gap-6 xl:grid-cols-[1fr_.7fr]"><section className="rounded-[24px] border border-card-border bg-card p-6 sm:p-8"><div className="flex items-start gap-4"><span className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles size={21} /></span><div><h2 className="font-display text-xl font-extrabold">What are you trying to do?</h2><p className="mt-1 text-sm text-muted-foreground">For example: “I moved to a new city and need to update my address.”</p></div></div><textarea value={request} onChange={(e) => setRequest(e.target.value)} className="mt-6 min-h-[150px] w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-6 outline-none focus:border-primary" placeholder="Tell SEVA in your own words..." data-testid="textarea-agent-request" /><div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><span className="text-xs text-muted-foreground">Do not share Aadhaar numbers, passwords, or sensitive personal details.</span><button onClick={submit} disabled={analyze.isPending || request.trim().length < 3} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50" data-testid="button-analyze-request">{analyze.isPending ? 'Reviewing your request...' : 'Review my request'} <Send size={15} /></button></div>{result && <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/[.04] p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-primary">Transparent result</p><h3 className="mt-1 font-display text-lg font-extrabold">{result.category || 'Possible matches'}</h3></div><CheckCircle2 className="text-primary" size={20} /></div>{result.disclaimer && <p className="mt-3 text-sm leading-6 text-muted-foreground">{result.disclaimer}</p>}<div className="mt-4 grid gap-2">{result.service_ids?.map((id) => { const service = services.data?.find((item) => item.id === id); return <Link key={id} href={`/services/${id}`} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm font-bold hover:border-primary/30" data-testid={`link-agent-service-${id}`}><span>{service?.name || id}</span><ArrowRight size={15} className="text-primary" /></Link>; })}</div>{result.missing_information?.length ? <div className="mt-4 border-t border-border pt-4"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">May need clarification</p><div className="mt-2 flex flex-wrap gap-2">{result.missing_information.map((item) => <span key={item} className="rounded-lg bg-accent/20 px-2.5 py-1.5 text-xs font-semibold">{item}</span>)}</div></div> : null}</div>}</section><section className="rounded-[24px] border border-card-border bg-card p-6 sm:p-8"><div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-muted-foreground">Agent status</p><h2 className="mt-1 font-display text-xl font-extrabold">{session.data?.status || 'Ready when you are'}</h2></div><span className={cx('grid size-10 place-items-center rounded-xl', session.data?.status === 'active' ? 'bg-accent/25 text-foreground' : 'bg-primary/10 text-primary')}><ActivityIcon size={18} /></span></div><QueryState loading={session.isLoading} error={session.error} onRetry={() => session.refetch()} label="agent activity"><div className="mt-6 space-y-0">{(session.data?.events ?? []).map((event, index) => <div key={event.id} className="relative flex gap-3 pb-6 last:pb-0"><div className="relative z-10 grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-primary">{eventIcon(event.status)}</div>{index < (session.data?.events.length ?? 0) - 1 && <div className="absolute left-3.5 top-7 h-[calc(100%-12px)] w-px bg-border" />}<div><p className="text-sm font-bold">{event.label}</p><p className="mt-1 text-xs text-muted-foreground">{event.status}</p></div></div>)}{!session.data?.events?.length && <EmptyState icon={Sparkles} title="Agent is standing by" body="Your request will appear as a clear activity trail here." />}</div></QueryState></section></div></div>;
+}
+
+function Notifications() {
+  const query = useListNotifications();
+  const mark = useMarkNotificationRead();
+  const qc = useQueryClient();
+  const items: Notification[] = query.data ?? [];
+  return <div className="animate-rise"><PageHeading eyebrow="Your inbox" title="Notifications" description="Useful reminders about your saved services and document checklist, without noise." /><QueryState loading={query.isLoading} error={query.error} onRetry={() => query.refetch()} label="notifications"><div className="mx-auto max-w-3xl space-y-3">{items.map((item) => <div key={item.id} className={cx('flex gap-4 rounded-2xl border p-5 transition-colors', item.unread ? 'border-primary/25 bg-primary/[.03]' : 'border-card-border bg-card')}><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-primary"><Bell size={18} /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-display font-bold">{item.title}</h2>{item.unread && <span className="size-2 rounded-full bg-accent" />}</div><p className="mt-1 text-sm leading-6 text-muted-foreground">{item.body}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{item.category} · {timeLabel(item.time)}</p></div>{item.unread && <button onClick={() => mark.mutate({ id: item.id }, { onSuccess: () => qc.invalidateQueries({ queryKey: getListNotificationsQueryKey() }) })} className="self-start rounded-lg border border-border px-3 py-2 text-[11px] font-bold hover:bg-muted" data-testid={`button-read-notification-${item.id}`}>Mark read</button>}</div>)}{!items.length && <EmptyState icon={Bell} title="You are all caught up" body="New reminders will appear here when there is something worth your attention." />}</div></QueryState></div>;
+}
+
+function Profile() {
+  const [sourceMode, setSourceMode] = useState(true);
+  const [reminders, setReminders] = useState(true);
+  return <div className="animate-rise"><PageHeading eyebrow="Preferences" title="Your SEVA settings" description="Choose how you want civic information presented. These preferences stay on this device for the demo." /><div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]"><div className="rounded-2xl border border-card-border bg-card p-6"><div className="flex items-center gap-4"><span className="grid size-16 place-items-center rounded-2xl bg-secondary font-display text-xl font-extrabold">AK</span><div><h2 className="font-display text-xl font-extrabold">Aarav Kapoor</h2><p className="text-sm text-muted-foreground">Demo profile · India</p></div></div><div className="mt-7 border-t border-border pt-5"><div className="flex items-center gap-3 text-sm font-bold"><LockKeyhole size={16} className="text-primary" /> Privacy-first workspace</div><p className="mt-2 text-xs leading-5 text-muted-foreground">SEVA uses your choices to shape this experience. It does not ask for or display sensitive identity numbers.</p></div></div><div className="rounded-2xl border border-card-border bg-card p-6"><SectionTitle icon={Settings2} title="Experience preferences" /><div className="mt-5 divide-y divide-border">{[['Show source details on every result', sourceMode, setSourceMode], ['Remind me about pending steps', reminders, setReminders]].map(([label, value, setter]) => <div key={String(label)} className="flex items-center justify-between gap-5 py-4"><div><p className="text-sm font-bold">{label as string}</p><p className="mt-1 text-xs text-muted-foreground">{label === 'Show source details on every result' ? 'Keep provenance close to the decision.' : 'Only gentle, relevant reminders.'}</p></div><button onClick={() => (setter as (value: boolean) => void)(!(value as boolean))} className={cx('relative h-6 w-11 rounded-full transition-colors', value ? 'bg-primary' : 'bg-muted')} data-testid={`button-toggle-${String(label).slice(0, 8).toLowerCase()}`} aria-pressed={value as boolean}><span className={cx('absolute top-1 size-4 rounded-full bg-card transition-transform', value ? 'translate-x-6' : 'translate-x-1')} /></button></div>)}</div></div></div></div>;
+}
+
+function Analytics() {
+  const query = useGetAnalyticsSummary();
+  const data: AnalyticsSummary | undefined = query.data;
+  const max = Math.max(...(data?.category_counts?.map((item) => item.value) ?? [1]));
+  return <div className="animate-rise"><PageHeading eyebrow="Privacy-conscious insights" title="What people are looking for" description="Aggregate patterns help SEVA improve discoverability. This view intentionally avoids individual-level tracking." /><QueryState loading={query.isLoading} error={query.error} onRetry={() => query.refetch()} label="analytics"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Total searches" value={data?.total_searches ?? 0} note="Across the demo" icon={Search} /><StatCard label="Successful matches" value={data?.successful_matches ?? 0} note="A useful starting point" icon={CheckCircle2} tone="teal" /><StatCard label="Incomplete journeys" value={data?.incomplete_journeys ?? 0} note="Where guidance can improve" icon={Clock3} tone="orange" /><StatCard label="Average completion" value={`${data?.average_completion ?? 0}%`} note="Across active journeys" icon={BarChart3} tone="navy" /></div><div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_.8fr]"><section className="rounded-2xl border border-card-border bg-card p-6"><SectionTitle icon={BarChart3} title="Searches by category" /><div className="mt-6 space-y-4">{(data?.category_counts ?? []).map((item) => <div key={item.label}><div className="mb-1.5 flex justify-between text-xs font-bold"><span>{item.label}</span><span className="text-muted-foreground">{item.value}</span></div><div className="h-2.5 rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(5, item.value / max * 100)}%` }} /></div></div>)}{!data?.category_counts?.length && <EmptyState icon={BarChart3} title="No aggregate data yet" body="Patterns will appear as the directory is used." />}</div></section><section className="rounded-2xl border border-card-border bg-card p-6"><SectionTitle icon={CircleAlert} title="Information people miss" /><div className="mt-5 space-y-3">{(data?.missing_information ?? []).map((item) => <div key={item.label} className="flex items-center justify-between rounded-xl bg-muted/55 p-3"><span className="text-sm font-semibold">{item.label}</span><span className="font-mono text-xs font-bold text-primary">{item.value}</span></div>)}{!data?.missing_information?.length && <EmptyState icon={CircleAlert} title="Nothing to flag yet" body="We will surface common missing details in aggregate." />}</div></section></div></QueryState><div className="mt-6 flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/[.04] p-5 text-sm"><ShieldCheck className="shrink-0 text-primary" size={18} /><p className="text-muted-foreground">No names, phone numbers, or individual journeys are represented in these aggregates.</p></div></div>;
+}
+
+function Admin() {
+  const services = useListServices();
+  const health = useHealthCheck();
+  const items = services.data ?? [];
+  return <div className="animate-rise"><PageHeading eyebrow="Operations" title="Service verification" description="A compact view for reviewing directory freshness and demo records." action={<Link href="/discover" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-bold" data-testid="link-admin-directory"><Search size={14} /> Open directory</Link>} /><div className="grid gap-4 sm:grid-cols-3"><StatCard label="Directory entries" value={items.length} note="Loaded from service catalog" icon={Landmark} /><StatCard label="Demo information" value={items.filter((item) => item.is_demo).length} note="Clearly marked in the UI" icon={Zap} tone="orange" /><StatCard label="API status" value={health.isError ? 'Check' : 'Ready'} note="Health endpoint" icon={ActivityIcon} tone="navy" /></div><div className="mt-6 overflow-hidden rounded-2xl border border-card-border bg-card"><div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left"><thead className="border-b border-border bg-muted/45 text-[10px] font-bold uppercase tracking-[.14em] text-muted-foreground"><tr><th className="px-5 py-4">Service</th><th className="px-5 py-4">Authority</th><th className="px-5 py-4">Last verified</th><th className="px-5 py-4">Status</th><th className="px-5 py-4">Source</th></tr></thead><tbody className="divide-y divide-border/70">{items.map((service) => <tr key={service.id} className="text-sm"><td className="px-5 py-4"><Link href={`/services/${service.id}`} className="font-bold hover:text-primary" data-testid={`link-admin-service-${service.id}`}>{service.name}</Link>{service.is_demo && <span className="ml-2 rounded bg-accent/20 px-1.5 py-1 text-[9px] font-bold uppercase">Demo</span>}</td><td className="px-5 py-4 text-muted-foreground">{service.authority}</td><td className="px-5 py-4 text-muted-foreground">{dateLabel(service.last_verified)}</td><td className="px-5 py-4"><span className={cx('inline-flex items-center gap-1 text-xs font-bold', service.active ? 'text-primary' : 'text-muted-foreground')}><span className="size-1.5 rounded-full bg-current" />{service.active ? 'Active' : 'Inactive'}</span></td><td className="px-5 py-4"><a href={service.official_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary" data-testid={`link-admin-source-${service.id}`}>Open <ExternalLink size={12} /></a></td></tr>)}</tbody></table></div>{!items.length && <div className="p-7"><EmptyState icon={Landmark} title="No service records" body="The directory has not returned entries yet." /></div>}</div></div>;
+}
+
+function Router() {
+  return <RoutedErrorBoundary><Shell><Switch><Route path="/" component={Home} /><Route path="/discover" component={Discover} /><Route path="/services/:id" component={ServiceDetail} /><Route path="/my-services" component={MyServices} /><Route path="/agent" component={Agent} /><Route path="/documents" component={Documents} /><Route path="/notifications" component={Notifications} /><Route path="/profile" component={Profile} /><Route path="/analytics" component={Analytics} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></Shell></RoutedErrorBoundary>;
+}
+function RoutedErrorBoundary({ children }: { children: ReactNode }) { const [location] = useLocation(); return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>; }
+function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>; }
+export default App;

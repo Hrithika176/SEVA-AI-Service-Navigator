@@ -1,6 +1,6 @@
-# [Project name]
+# SEVA AI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+SEVA AI helps people describe a public-service need, find potentially relevant verified or demo records, prepare documents, and follow a guided next step.
 
 ## Run & Operate
 
@@ -22,15 +22,25 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/seva-ai/src/App.tsx` — responsive product shell, routes, screens, and client interactions
+- `artifacts/seva-ai/src/index.css` — SEVA visual system and responsive styles
+- `lib/api-spec/openapi.yaml` — source of truth for the service, journey, document, agent, notification, dashboard, and analytics API
+- `artifacts/api-server/src/routes/seva.ts` — validated demo API handlers
+- `artifacts/api-server/src/lib/seva-store.ts` — clearly labeled demo records and in-memory prototype state
+- `lib/db/src/schema/index.ts` — Drizzle schema for users, services, sources, journeys, documents, agent events, notifications, and saved services
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Demo service records are explicitly marked `is_demo` and use source-first copy; the UI never presents demo data as guaranteed eligibility.
+- The first build keeps document state only and does not store document bytes; object storage can be added later with explicit consent.
+- The API is contract-first through OpenAPI and generated React Query hooks, while the demo server uses an in-memory store so the initial journey is usable without authentication.
+- High-level agent activity is exposed as safe status events only; hidden reasoning is not shown.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Responsive SEVA AI dashboard with home, service discovery, service detail, My Services, agent activity, document readiness, notifications, profile preferences, analytics, and admin verification views.
+- Demo journey for an education-support request with official-source reminders, readiness checks, and next-step guidance.
+- Major actions are wired through generated API hooks: searching, analyzing requests, saving journeys, updating journeys, adding/toggling/removing documents, and marking notifications read.
 
 ## User preferences
 
@@ -38,7 +48,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Demo timestamps may be human-readable labels as well as ISO values; client display helpers must tolerate both.
+- Managed artifact workflows provide `PORT` and `BASE_PATH`; restart `artifacts/seva-ai: web` and `artifacts/api-server: API Server` rather than running app servers manually.
 
 ## Pointers
 

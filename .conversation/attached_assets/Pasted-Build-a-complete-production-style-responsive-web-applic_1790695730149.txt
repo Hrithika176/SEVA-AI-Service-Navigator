@@ -1,0 +1,828 @@
+Build a complete production-style responsive web application called SEVA AI — Public Service Navigator Agent.
+
+IMPORTANT:
+This is NOT a simple chatbot, landing page, or static UI. Build it as a realistic full-stack application that could eventually be used by citizens across India.
+
+The application helps users describe a real-life need in natural language and then uses an agentic workflow to discover potentially relevant public/government services, identify missing information, organize required documents, explain next steps, and help users track their service journey.
+
+Do NOT claim guaranteed eligibility or make up government schemes. Government-service information must be represented as verified data with an official source URL and verification date. If information is unavailable, clearly say that it needs verification.
+
+==================================================
+
+1. PRODUCT IDENTITY
+   ==================================================
+
+App name:
+SEVA AI
+
+Tagline:
+"One problem. The right service. The next step."
+
+Secondary tagline:
+"Navigate public services with an AI agent."
+
+Visual identity:
+
+- Modern
+- Trustworthy
+- Professional
+- Minimal
+- Premium
+- Accessible
+- Indian public-service focused
+- AI dashboard aesthetic
+- Do NOT copy WhatsApp, Instagram, or any existing company's branding.
+- Take inspiration only from the usability and polish of modern consumer apps.
+
+Use a clean light interface with optional dark mode.
+
+Primary navigation:
+Home
+Discover
+My Services
+Agent
+Documents
+Notifications
+Profile
+
+Desktop:
+Sidebar navigation + main content.
+
+Mobile:
+Bottom navigation similar to modern mobile applications.
+
+==================================================
+2. HOMEPAGE
+
+Create a polished hero section.
+
+Heading:
+"Government services shouldn't feel like a maze."
+
+Subheading:
+"Tell SEVA AI what you need. Your personal service navigator finds potentially relevant services, checks what information you may need, and guides you through the next step."
+
+Large intelligent input box:
+
+"What do you need help with?"
+
+Placeholder examples that rotate:
+"I need financial assistance for my education"
+"I need to apply for a certificate"
+"I want to know what support is available for my family"
+"I want to start a small business"
+"I need help finding an employment service"
+
+Buttons:
+[ Find My Service ]
+[ Explore Services ]
+
+Include microphone icon for future voice input.
+
+Below input:
+"Try saying it naturally. You don't need to know the service name."
+
+==================================================
+3. QUICK ACCESS
+
+Create attractive cards:
+
+Education
+Employment
+Certificates
+Business
+Agriculture
+Social Support
+Senior Citizens
+Disability & Accessibility
+Housing
+Transport
+Women & Child Services
+Local Services
+
+Each card opens the Discover page filtered by category.
+
+==================================================
+4. SERVICE DISCOVERY
+
+Create a realistic search page.
+
+Top:
+"Find a Public Service"
+
+Search bar:
+"Describe what you need..."
+
+Filters:
+
+- State
+- Central / State / Local
+- Category
+- Language
+- Online / Offline
+- Document requirement
+- Service availability
+
+Search results should display:
+
+Service name
+Short description
+Category
+Authority
+Location
+Potential relevance
+Required documents
+Application method
+Estimated process information if available
+Official source
+Last verified date
+
+Buttons:
+[View Details]
+[Check Requirements]
+[Save]
+
+Never display fabricated government information.
+
+==================================================
+5. AI AGENT WORKFLOW
+
+This is the CORE FEATURE.
+
+Create an Agent Activity interface.
+
+When the user submits a request, display:
+
+SEVA AI AGENT
+Status: ACTIVE
+
+Workflow:
+
+1. Understanding request
+2. Identifying service category
+3. Searching verified service database
+4. Comparing service requirements
+5. Identifying missing information
+6. Checking document readiness
+7. Preparing next-step guidance
+8. Waiting for user confirmation
+
+Use animated progress indicators.
+
+Example activity:
+
+✓ Request understood
+✓ Education-related services identified
+✓ 4 potentially relevant services found
+● Checking requirements
+○ Preparing next steps
+
+Show a live "Agent Activity" panel.
+
+IMPORTANT:
+Do not expose hidden chain-of-thought or private reasoning.
+Only show safe high-level actions/statuses.
+
+==================================================
+6. SERVICE RESULTS
+
+After the agent processes the request, display:
+
+"Potentially relevant services"
+
+Each service card should contain:
+
+Service name
+Why it may be relevant
+Eligibility summary
+Required documents
+Application mode
+Authority
+Official source
+Verification date
+
+Example:
+
+Potentially relevant because:
+✓ Education-related request
+✓ Student-related service
+⚠ Additional information required
+
+Button:
+[Check My Requirements]
+
+==================================================
+7. ELIGIBILITY ASSISTANT
+
+Build a guided question system.
+
+Do NOT ask every question at once.
+
+The system should identify missing information and ask only relevant questions.
+
+Example:
+
+"We need a little more information."
+
+Question:
+"What is your current education level?"
+
+Options:
+School
+Intermediate
+Diploma
+Undergraduate
+Postgraduate
+Other
+
+Next:
+"Which state are you applying from?"
+
+Then:
+"Do you have the required income/document information?"
+
+Create progress indicator:
+
+Step 1 of 4
+
+At the end display:
+
+"Potentially relevant based on the information provided."
+
+Never say:
+"You are definitely eligible."
+
+Add:
+"Final eligibility is determined by the relevant authority."
+
+==================================================
+8. DOCUMENT READINESS
+
+Create a Documents page.
+
+Dashboard:
+
+DOCUMENT READINESS
+72%
+
+Required
+✓ Identity document
+✓ Academic document
+⚠ Income document
+○ Application form
+
+Allow users to:
+
+- Add document
+- Upload document
+- View document status
+- Remove document
+- Mark document as available
+
+For the prototype, document processing can be simulated safely.
+
+If implementing actual document AI:
+
+- Extract only necessary fields
+- Do not expose sensitive information unnecessarily
+- Do not permanently store documents without explicit user consent
+- Clearly explain privacy
+
+Create:
+"Missing documents"
+"Documents to verify"
+"Ready documents"
+
+==================================================
+9. SERVICE JOURNEY
+
+Create a visual timeline:
+
+SERVICE JOURNEY
+
+01 Discover ✓
+02 Requirements ✓
+03 Documents ●
+04 Application ○
+05 Status ○
+06 Completion ○
+
+Each stage has:
+Title
+Description
+Current action
+Official source
+User action
+
+Example:
+
+CURRENT STEP
+Prepare required documents
+
+NEXT ACTION
+Verify the income certificate requirement from the official source.
+
+Button:
+[Open Official Service]
+
+==================================================
+10. MY SERVICES
+
+Create a dashboard showing saved and active service journeys.
+
+Cards:
+
+Education assistance
+Status: Documents pending
+
+Certificate service
+Status: Ready to apply
+
+Employment service
+Status: Saved
+
+Each card:
+Progress
+Last activity
+Next action
+Official source
+
+Buttons:
+[Continue]
+[View]
+[Remove]
+
+==================================================
+11. NOTIFICATIONS
+
+Create notification center.
+
+Examples:
+
+"Your saved service has a new verification date."
+
+"You still have 2 pending preparation steps."
+
+"Your service journey is waiting for your confirmation."
+
+Use categories:
+Agent
+Service
+Documents
+Updates
+
+Do not pretend that an application status has changed unless the backend actually receives that information.
+
+==================================================
+12. AGENT PAGE
+
+Create a dedicated page:
+
+"Your Service Agent"
+
+Sections:
+
+Agent status:
+ACTIVE
+
+Current task:
+Preparing your next service step
+
+Recent activity:
+✓ Request analyzed
+✓ Service search completed
+✓ Requirements identified
+
+Upcoming:
+○ Document verification
+○ User confirmation
+
+Create buttons:
+[Start New Request]
+[View Activity]
+[Manage Preferences]
+
+==================================================
+13. MULTILINGUAL SUPPORT
+
+Add language selector:
+
+English
+తెలుగు
+हिन्दी
+
+Design the architecture so more languages can be added later.
+
+The UI text should be structured so translations can be added without rewriting components.
+
+==================================================
+14. VOICE INPUT
+
+Add microphone button to the main request field.
+
+If browser speech recognition is available:
+
+- Convert speech to text
+- Show transcript
+- Let user edit before submitting
+
+If unavailable:
+Show a graceful message.
+
+Do not require voice input for normal use.
+
+==================================================
+15. PERSONALIZATION
+
+Create optional profile:
+
+Name
+State
+District
+Preferred language
+Interests/categories
+Saved services
+
+Do NOT ask for unnecessary sensitive personal information.
+
+Users should be able to continue without creating an account for basic service discovery.
+
+==================================================
+16. AUTHENTICATION
+
+Prepare authentication architecture.
+
+Support:
+
+- Email/password
+- Google sign-in if available
+- Guest mode
+
+Guest mode:
+Users can search services without an account.
+
+Authenticated users can save:
+
+- Service journeys
+- Preferences
+- Documents
+- Notifications
+
+Do not store passwords manually. Use secure authentication.
+
+==================================================
+17. DATABASE
+
+Create a proper database structure.
+
+Tables/collections:
+
+users
+services
+service_requirements
+service_documents
+service_sources
+user_service_journeys
+user_documents
+agent_sessions
+agent_events
+notifications
+saved_services
+
+Each service must contain:
+
+id
+name
+description
+category
+level
+state
+authority
+eligibility
+requirements
+documents
+application_method
+official_url
+source_name
+last_verified
+active
+
+IMPORTANT:
+Do not populate the database with invented government schemes.
+
+For the initial prototype, create clearly labeled DEMO services if necessary.
+
+Use:
+
+is_demo: true
+
+for demonstration records.
+
+==================================================
+18. VERIFIED INFORMATION SYSTEM
+
+Every real service must have:
+
+Official source
+Official URL
+Authority
+Last verified date
+
+Display:
+
+"Information source: Official source"
+"Last verified: [date]"
+
+Create an admin/data-management architecture so verified service information can be updated later.
+
+The AI must prefer verified database information over its own general knowledge.
+
+==================================================
+19. AGENT ARCHITECTURE
+
+Implement the application so the AI workflow can eventually use separate logical agents:
+
+Intent Agent
+Service Discovery Agent
+Eligibility Agent
+Document Agent
+Guidance Agent
+Follow-up Agent
+
+Architecture:
+
+USER
+↓
+Intent Agent
+↓
+Service Discovery Agent
+↓
+Eligibility Agent
+↓
+Document Agent
+↓
+Guidance Agent
+↓
+Follow-up Agent
+
+The agents may be implemented as modular services/functions rather than six separate AI models.
+
+Do not unnecessarily call multiple AI models.
+
+==================================================
+20. AI SAFETY
+
+The AI must:
+
+- Never fabricate government schemes
+- Never guarantee eligibility
+- Never invent deadlines
+- Never invent application status
+- Never invent fees
+- Never invent official URLs
+- Clearly distinguish verified information from AI-generated guidance
+- Direct users to official sources
+- Ask for confirmation before important actions
+- Avoid unnecessary collection of personal information
+
+If information cannot be verified:
+
+"SEVA AI could not verify this information. Please check the official source."
+
+==================================================
+21. ADMIN DASHBOARD
+
+Create an admin interface.
+
+Admin can:
+
+Add service
+Edit service
+Deactivate service
+Update official URL
+Update requirements
+Update verification date
+View service usage
+View common search categories
+View failed searches
+
+Include:
+
+Service verification status
+Active
+Needs verification
+Expired
+
+Never allow ordinary users to modify official service information.
+
+==================================================
+22. ANALYTICS
+
+Create an analytics dashboard with privacy-conscious aggregated information.
+
+Cards:
+
+Total service searches
+Most searched categories
+Successful service matches
+Incomplete journeys
+Most common missing information
+Average journey completion
+
+Use charts.
+
+Do not expose individual user information.
+
+==================================================
+23. ACCESSIBILITY
+
+Make the entire application accessible.
+
+Include:
+
+- Keyboard navigation
+- Good contrast
+- Screen-reader-friendly labels
+- Large clickable buttons
+- Clear error messages
+- Responsive layout
+- Mobile-first design
+
+==================================================
+24. ERROR STATES
+
+Create realistic states:
+
+No results
+Network error
+AI unavailable
+Service unavailable
+Information needs verification
+Missing information
+Invalid input
+Upload error
+Session expired
+
+Never leave blank screens.
+
+==================================================
+25. LOADING STATES
+
+Use professional skeleton loaders.
+
+For agent processing show:
+
+Understanding your request...
+Finding relevant services...
+Checking requirements...
+Preparing your next step...
+
+Do not pretend these are real actions if they are only simulated.
+
+==================================================
+26. DESIGN
+
+Use:
+
+- Rounded cards
+- Subtle shadows
+- Clean typography
+- Professional spacing
+- Smooth transitions
+- Minimal animations
+- Modern dashboard components
+- Responsive layouts
+- Consistent icons
+
+Do NOT make it look like a generic AI chatbot.
+
+Make it feel like a real consumer application.
+
+Use a polished landing page similar in quality to modern SaaS products.
+
+==================================================
+27. MOBILE EXPERIENCE
+
+The mobile version must feel like a real app.
+
+Bottom navigation:
+
+Home
+Discover
+My Services
+Agent
+Profile
+
+Large touch targets.
+
+Cards should become vertically stacked.
+
+Agent activity should remain readable on mobile.
+
+==================================================
+28. DEMO MODE
+
+Create a clearly labeled Demo Mode.
+
+Demo scenario:
+
+User enters:
+
+"I am a college student looking for financial assistance."
+
+The system demonstrates:
+
+1. Understanding request
+2. Finding relevant demo services
+3. Asking missing questions
+4. Showing requirements
+5. Showing document readiness
+6. Showing service journey
+
+Clearly label demo data as:
+
+"Demo information — verify through the official source before applying."
+
+==================================================
+29. SECURITY
+
+Use environment variables for:
+AI API keys
+Database credentials
+Authentication secrets
+
+NEVER place API keys directly in frontend code.
+
+Validate user input.
+
+Use secure server-side API calls.
+
+==================================================
+30. TECHNICAL REQUIREMENTS
+
+Use a modern React-based architecture.
+
+Recommended:
+
+Frontend:
+React
+Vite
+Tailwind CSS
+Lucide icons
+
+Backend:
+Node.js/server functions
+
+Database:
+Use the database available through the platform.
+
+AI:
+Create a server-side AI service abstraction so the model/provider can be changed later.
+
+Structure code cleanly:
+
+components/
+pages/
+services/
+agents/
+database/
+utils/
+types/
+
+Do not put the entire application into one giant component.
+
+==================================================
+31. DEMO-FIRST IMPLEMENTATION
+
+First make the complete UI and user journey functional with demo data.
+
+Then connect real backend functionality.
+
+Every major button must do something meaningful.
+
+No dead buttons.
+
+No "Coming Soon" placeholders for core features.
+
+==================================================
+32. FINAL RESULT
+
+The finished application should feel like a real product that could be presented at a major hackathon.
+
+The user journey must be:
+
+HOME
+→ Describe problem
+→ AI understands request
+→ Service discovery
+→ Compare relevant services
+→ Check requirements
+→ Document readiness
+→ Service journey
+→ Official source
+→ Save/continue
+→ Agent follow-up
+
+Build the application now.
+
+After implementation, run the app, test all major routes, fix errors, ensure the layout works on desktop and mobile, and make sure there are no broken buttons, missing imports, console errors, or blank pages.

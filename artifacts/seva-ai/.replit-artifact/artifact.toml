@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SEVA AI"
+description = "A production-style public service navigator that helps people describe a need, discover potentially relevant verified services, prepare documents, and follow a guided service journey."
+version = "1.0.0"
+id = "artifacts/seva-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25106
+
+[services.development]
+run = "pnpm --filter @workspace/seva-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seva-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/seva-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25106"
+BASE_PATH = "/"
