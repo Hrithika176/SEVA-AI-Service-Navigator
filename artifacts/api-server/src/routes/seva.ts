@@ -4,6 +4,12 @@ import {
   CreateDocumentBody,
   CreateJourneyBody,
   DeleteDocumentParams,
+  ReportServiceOutdatedBody,
+  ReportServiceOutdatedParams,
+  ReportServiceOutdatedResponse,
+  UpdateServiceVerificationBody,
+  UpdateServiceVerificationParams,
+  UpdateServiceVerificationResponse,
   GetAgentSessionResponse,
   GetAnalyticsSummaryResponse,
   GetDashboardSummaryResponse,
@@ -70,6 +76,45 @@ router.get("/services/:id", (req, res): void => {
     return;
   }
   res.json(GetServiceResponse.parse(service));
+});
+
+router.post("/services/:id/outdated-reports", (req, res): void => {
+  const params = ReportServiceOutdatedParams.parse(req.params);
+  const body = ReportServiceOutdatedBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  const service = findService(params.id);
+  if (!service) {
+    res.status(404).json({ error: "Service not found" });
+    return;
+  }
+  req.log.info({ serviceId: service.id, reason: body.data.reason }, "Service freshness report received");
+  res.status(201).json(
+    ReportServiceOutdatedResponse.parse({
+      id: `report-${Date.now()}`,
+      service_id: service.id,
+      status: "received",
+      message: "Thanks. This source report has been queued for admin verification.",
+    }),
+  );
+});
+
+router.patch("/admin/services/:id/verification", (req, res): void => {
+  const params = UpdateServiceVerificationParams.parse(req.params);
+  const body = UpdateServiceVerificationBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+  const service = findService(params.id);
+  if (!service) {
+    res.status(404).json({ error: "Service not found" });
+    return;
+  }
+  Object.assign(service, body.data);
+  res.json(UpdateServiceVerificationResponse.parse(service));
 });
 
 router.get("/journeys", (_req, res): void => {

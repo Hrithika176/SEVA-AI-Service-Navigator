@@ -40,7 +40,9 @@ export const ListServicesResponseItem = zod.object({
   "application_method": zod.string(),
   "official_url": zod.string().url(),
   "source_name": zod.string(),
+  "source_type": zod.string(),
   "last_verified": zod.string(),
+  "verification_status": zod.string(),
   "active": zod.boolean(),
   "is_demo": zod.boolean()
 })
@@ -68,7 +70,79 @@ export const GetServiceResponse = zod.object({
   "application_method": zod.string(),
   "official_url": zod.string().url(),
   "source_name": zod.string(),
+  "source_type": zod.string(),
   "last_verified": zod.string(),
+  "verification_status": zod.string(),
+  "active": zod.boolean(),
+  "is_demo": zod.boolean()
+})
+
+
+/**
+ * @summary Report potentially outdated service information
+ */
+export const ReportServiceOutdatedParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const reportServiceOutdatedBodyReasonMin = 3;
+export const reportServiceOutdatedBodyReasonMax = 500;
+
+
+
+export const ReportServiceOutdatedBody = zod.object({
+  "reason": zod.string().min(reportServiceOutdatedBodyReasonMin).max(reportServiceOutdatedBodyReasonMax)
+})
+
+export const ReportServiceOutdatedResponse = zod.object({
+  "id": zod.string(),
+  "service_id": zod.string(),
+  "status": zod.string(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Update and verify a service source record
+ */
+export const UpdateServiceVerificationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+
+
+
+
+
+
+
+export const UpdateServiceVerificationBody = zod.object({
+  "authority": zod.string().min(1),
+  "official_url": zod.string().url().min(1),
+  "source_name": zod.string().min(1),
+  "source_type": zod.string().min(1),
+  "last_verified": zod.string().min(1),
+  "verification_status": zod.string().min(1)
+})
+
+export const UpdateServiceVerificationResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "level": zod.string(),
+  "state": zod.string(),
+  "authority": zod.string(),
+  "eligibility": zod.string(),
+  "requirements": zod.array(zod.string()),
+  "documents": zod.array(zod.string()),
+  "application_method": zod.string(),
+  "official_url": zod.string().url(),
+  "source_name": zod.string(),
+  "source_type": zod.string(),
+  "last_verified": zod.string(),
+  "verification_status": zod.string(),
   "active": zod.boolean(),
   "is_demo": zod.boolean()
 })

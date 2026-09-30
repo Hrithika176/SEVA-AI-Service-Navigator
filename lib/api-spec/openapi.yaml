@@ -85,6 +85,60 @@ paths:
                 $ref: "#/components/schemas/Service"
         "404":
           description: Service not found
+  /services/{id}/outdated-reports:
+    post:
+      operationId: reportServiceOutdated
+      tags: [services]
+      summary: Report potentially outdated service information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutdatedReportInput"
+      responses:
+        "201":
+          description: Report received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutdatedReport"
+        "404":
+          description: Service not found
+  /admin/services/{id}/verification:
+    patch:
+      operationId: updateServiceVerification
+      tags: [services]
+      summary: Update and verify a service source record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceVerificationInput"
+      responses:
+        "200":
+          description: Updated service source record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "400":
+          description: Invalid source record
+        "404":
+          description: Service not found
   /journeys:
     get:
       operationId: listJourneys
@@ -319,7 +373,7 @@ components:
         - status
     Service:
       type: object
-      required: [id, name, description, category, level, state, authority, eligibility, requirements, documents, application_method, official_url, source_name, last_verified, active, is_demo]
+      required: [id, name, description, category, level, state, authority, eligibility, requirements, documents, application_method, official_url, source_name, source_type, last_verified, verification_status, active, is_demo]
       properties:
         id: { type: string }
         name: { type: string }
@@ -338,9 +392,34 @@ components:
         application_method: { type: string }
         official_url: { type: string, format: uri }
         source_name: { type: string }
+        source_type: { type: string }
         last_verified: { type: string }
+        verification_status: { type: string }
         active: { type: boolean }
         is_demo: { type: boolean }
+    ServiceVerificationInput:
+      type: object
+      required: [authority, official_url, source_name, source_type, last_verified, verification_status]
+      properties:
+        authority: { type: string, minLength: 1 }
+        official_url: { type: string, format: uri, minLength: 1 }
+        source_name: { type: string, minLength: 1 }
+        source_type: { type: string, minLength: 1 }
+        last_verified: { type: string, minLength: 1 }
+        verification_status: { type: string, minLength: 1 }
+    OutdatedReportInput:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    OutdatedReport:
+      type: object
+      required: [id, service_id, status, message]
+      properties:
+        id: { type: string }
+        service_id: { type: string }
+        status: { type: string }
+        message: { type: string }
     Journey:
       type: object
       required: [id, service_id, service_name, status, progress, last_activity, next_action, current_stage]

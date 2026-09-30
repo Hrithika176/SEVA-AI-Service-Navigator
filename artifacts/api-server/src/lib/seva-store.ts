@@ -12,7 +12,9 @@ export type DemoService = {
   application_method: string;
   official_url: string;
   source_name: string;
+  source_type: string;
   last_verified: string;
+  verification_status: string;
   active: boolean;
   is_demo: boolean;
 };
@@ -61,7 +63,9 @@ export const services: DemoService[] = [
     application_method: "Check the official service portal after confirming the current scheme",
     official_url: "https://www.india.gov.in/",
     source_name: "India.gov.in",
+    source_type: "Official government portal",
     last_verified: "Demo record — verify before applying",
+    verification_status: "verification_required",
     active: true,
     is_demo: true,
   },
@@ -80,7 +84,9 @@ export const services: DemoService[] = [
     application_method: "Online or local office, depending on the verified service",
     official_url: "https://services.india.gov.in/",
     source_name: "National Government Services Portal",
+    source_type: "Official government portal",
     last_verified: "Demo record — verify before applying",
+    verification_status: "verification_required",
     active: true,
     is_demo: true,
   },
@@ -99,7 +105,9 @@ export const services: DemoService[] = [
     application_method: "Verify the official employment portal and local support options",
     official_url: "https://www.india.gov.in/",
     source_name: "India.gov.in",
+    source_type: "Official government portal",
     last_verified: "Demo record — verify before applying",
+    verification_status: "verification_required",
     active: true,
     is_demo: true,
   },
@@ -118,7 +126,9 @@ export const services: DemoService[] = [
     application_method: "Confirm the current official process before submitting any information",
     official_url: "https://services.india.gov.in/",
     source_name: "National Government Services Portal",
+    source_type: "Official government portal",
     last_verified: "Demo record — verify before applying",
+    verification_status: "verification_required",
     active: true,
     is_demo: true,
   },

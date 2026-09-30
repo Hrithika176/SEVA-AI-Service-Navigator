@@ -34,7 +34,10 @@ import type {
   JourneyUpdate,
   ListServicesParams,
   Notification,
+  OutdatedReport,
+  OutdatedReportInput,
   Service,
+  ServiceVerificationInput,
   UserDocument
 } from './api.schemas';
 
@@ -303,6 +306,184 @@ export function useGetService<TData = Awaited<ReturnType<typeof getService>>, TE
 
 
 
+
+export const getReportServiceOutdatedUrl = (id: string,) => {
+
+
+
+
+  return `/api/services/${id}/outdated-reports`
+}
+
+/**
+ * @summary Report potentially outdated service information
+ */
+export const reportServiceOutdated = async (id: string,
+    outdatedReportInput: OutdatedReportInput, options?: Parameters<typeof customFetch>[1]): Promise<OutdatedReport> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<OutdatedReport>(getReportServiceOutdatedUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(outdatedReportInput)
+  }
+);}
+
+
+
+
+
+export const getReportServiceOutdatedMutationKey = () => ['reportServiceOutdated'] as const;
+
+export const getReportServiceOutdatedMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportServiceOutdated>>, TError,ReportServiceOutdatedMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reportServiceOutdated>>, TError,ReportServiceOutdatedMutationVariables, TContext> => {
+
+const mutationKey = getReportServiceOutdatedMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportServiceOutdated>>, ReportServiceOutdatedMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reportServiceOutdated(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReportServiceOutdatedMutationResult = NonNullable<Awaited<ReturnType<typeof reportServiceOutdated>>>
+    export type ReportServiceOutdatedMutationBody = BodyType<OutdatedReportInput>
+    export type ReportServiceOutdatedMutationError = ErrorType<void>
+    export type ReportServiceOutdatedMutationVariables = {id: string;data: BodyType<OutdatedReportInput>}
+
+    /**
+ * @summary Report potentially outdated service information
+ */
+export const useReportServiceOutdated = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportServiceOutdated>>, TError,ReportServiceOutdatedMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reportServiceOutdated>>,
+        TError,
+        ReportServiceOutdatedMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReportServiceOutdatedMutationOptions(options));
+    }
+
+export const getUpdateServiceVerificationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/services/${id}/verification`
+}
+
+/**
+ * @summary Update and verify a service source record
+ */
+export const updateServiceVerification = async (id: string,
+    serviceVerificationInput: ServiceVerificationInput, options?: Parameters<typeof customFetch>[1]): Promise<Service> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<Service>(getUpdateServiceVerificationUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serviceVerificationInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateServiceVerificationMutationKey = () => ['updateServiceVerification'] as const;
+
+export const getUpdateServiceVerificationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateServiceVerification>>, TError,UpdateServiceVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateServiceVerification>>, TError,UpdateServiceVerificationMutationVariables, TContext> => {
+
+const mutationKey = getUpdateServiceVerificationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateServiceVerification>>, UpdateServiceVerificationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateServiceVerification(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateServiceVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof updateServiceVerification>>>
+    export type UpdateServiceVerificationMutationBody = BodyType<ServiceVerificationInput>
+    export type UpdateServiceVerificationMutationError = ErrorType<void>
+    export type UpdateServiceVerificationMutationVariables = {id: string;data: BodyType<ServiceVerificationInput>}
+
+    /**
+ * @summary Update and verify a service source record
+ */
+export const useUpdateServiceVerification = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateServiceVerification>>, TError,UpdateServiceVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateServiceVerification>>,
+        TError,
+        UpdateServiceVerificationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateServiceVerificationMutationOptions(options));
+    }
 
 export const getListJourneysUrl = () => {
 

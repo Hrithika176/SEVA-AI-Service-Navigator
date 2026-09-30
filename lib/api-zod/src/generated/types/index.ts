@@ -23,5 +23,8 @@ export * from './journeyInput';
 export * from './journeyUpdate';
 export * from './listServicesParams';
 export * from './notification';
+export * from './outdatedReport';
+export * from './outdatedReportInput';
 export * from './service';
+export * from './serviceVerificationInput';
 export * from './userDocument';

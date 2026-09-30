@@ -6,23 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Service {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  level: string;
-  state: string;
+export interface ServiceVerificationInput {
+  /** @minLength 1 */
   authority: string;
-  eligibility: string;
-  requirements: string[];
-  documents: string[];
-  application_method: string;
+  /** @minLength 1 */
   official_url: string;
+  /** @minLength 1 */
   source_name: string;
+  /** @minLength 1 */
   source_type: string;
+  /** @minLength 1 */
   last_verified: string;
+  /** @minLength 1 */
   verification_status: string;
-  active: boolean;
-  is_demo: boolean;
 }

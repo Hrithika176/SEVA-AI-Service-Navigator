@@ -23,9 +23,41 @@ export interface Service {
   application_method: string;
   official_url: string;
   source_name: string;
+  source_type: string;
   last_verified: string;
+  verification_status: string;
   active: boolean;
   is_demo: boolean;
+}
+
+export interface ServiceVerificationInput {
+  /** @minLength 1 */
+  authority: string;
+  /** @minLength 1 */
+  official_url: string;
+  /** @minLength 1 */
+  source_name: string;
+  /** @minLength 1 */
+  source_type: string;
+  /** @minLength 1 */
+  last_verified: string;
+  /** @minLength 1 */
+  verification_status: string;
+}
+
+export interface OutdatedReportInput {
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface OutdatedReport {
+  id: string;
+  service_id: string;
+  status: string;
+  message: string;
 }
 
 export interface Journey {
