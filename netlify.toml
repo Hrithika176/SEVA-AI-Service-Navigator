@@ -1,0 +1,13 @@
+[build]
+  # Build only the SEVA AI web app (not the Replit component preview sandbox).
+  command = "pnpm --filter @workspace/seva-ai run build"
+  publish = "artifacts/seva-ai/dist/public"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Client-side routing: serve the app shell for every path.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
