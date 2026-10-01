@@ -494,9 +494,13 @@ function Home() {
   const health = useHealthCheck();
   const analyze = useAnalyzeRequest();
   const summary: DashboardSummary | undefined = summaryQuery.data;
-  const services = (servicesQuery.data ?? [])
-    .filter((item) => item.active)
-    .slice(0, 3);
+  const servicesData = Array.isArray(servicesQuery.data)
+    ? servicesQuery.data
+    : Array.isArray((servicesQuery.data as any)?.data)
+      ? (servicesQuery.data as any).data
+      : [];
+
+  const services = servicesData.filter((item) => item.active).slice(0, 3);
   const activities: Activity[] = activityQuery.data ?? [];
   const submitRequest = () => {
     if (request.trim().length < 3) {
