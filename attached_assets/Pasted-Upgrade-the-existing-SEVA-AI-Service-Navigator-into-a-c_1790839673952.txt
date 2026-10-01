@@ -1,0 +1,375 @@
+Upgrade the existing SEVA AI Service Navigator into a complete,
+real-world conversational public-service application.
+
+IMPORTANT:
+Keep the existing SEVA AI homepage design and improve it.
+Do not start the project from scratch.
+Make the experience feel like a modern consumer app with a
+simple conversational interface.
+
+CORE EXPERIENCE
+
+When a new user opens SEVA AI, show:
+
+"Hi! I'm SEVA AI 👋
+I can help you find government services and schemes,
+understand eligibility, prepare documents and find the
+correct next step."
+
+Then provide:
+
+[Start with my profile]
+[Ask SEVA AI anything]
+
+PROFILE SETUP
+
+Ask questions conversationally, one at a time instead of showing
+a huge form.
+
+Ask only information that is useful:
+
+1. What should I call you? (optional)
+2. Age
+3. State
+4. District/city (optional)
+5. Gender, if relevant to the requested service
+6. Student / employed / unemployed / self-employed / farmer /
+   homemaker / senior citizen / other
+7. Approximate household income range, only when relevant
+8. Social category, only when relevant
+9. Rural / urban
+10. Disability status, only when relevant
+11. Marital status, only when relevant
+12. Main goal or problem
+
+Allow users to skip questions.
+
+Do NOT unnecessarily collect sensitive personal information.
+Do not ask for Aadhaar number, passwords, bank PINs, OTPs or
+other secrets.
+
+CONVERSATIONAL AI
+
+Create a large chat interface similar to modern AI assistants.
+
+Users should be able to type things like:
+
+"I am a 19 year old student. Are there scholarships I can apply for?"
+
+"I need help getting a caste certificate."
+
+"My father is a farmer. What government support may be relevant?"
+
+"I lost my certificate. What should I do?"
+
+"I want to find a government job."
+
+"I need housing assistance."
+
+"I need a service for my grandmother."
+
+"I want to start a small business."
+
+The AI should understand the intent and ask only the missing
+questions necessary to continue.
+
+PROFILE-AWARE RESULTS
+
+After understanding the user, show:
+
+"Based on what you've told me..."
+
+Then display relevant services/schemes.
+
+Each result should contain:
+
+• Scheme/service name
+• Government authority
+• Why it may be relevant
+• Key eligibility conditions
+• Benefits/purpose
+• Required documents
+• Application method
+• Official application/source link
+• Last verified date
+• Central or State scheme
+• Eligibility status:
+  "Potentially relevant"
+  "Needs more information"
+  "Likely not relevant based on current information"
+
+NEVER claim guaranteed eligibility unless the official source
+explicitly confirms it.
+
+ASK BEFORE USING PROFILE DATA
+
+Give the user a simple profile section where they can see,
+edit or delete the information they provided.
+
+Allow:
+Edit profile
+Clear profile
+Continue as guest
+
+SMART FOLLOW-UP
+
+After showing a scheme, provide buttons:
+
+[Check my eligibility]
+[Show required documents]
+[Explain how to apply]
+[Open official website]
+[Save for later]
+[Ask another question]
+
+ELIGIBILITY FLOW
+
+If the user selects "Check my eligibility":
+
+Ask scheme-specific questions one by one.
+
+Example:
+
+SEVA:
+"Do you currently live in Telangana?"
+
+User:
+"Yes"
+
+SEVA:
+"What is your approximate annual household income?"
+
+Continue until enough information is available.
+
+Then show a clear result with:
+• Information considered
+• Conditions matched
+• Conditions that still need verification
+• Official source
+
+Do not fabricate eligibility rules.
+
+DOCUMENT ASSISTANT
+
+For every relevant service show:
+
+Documents you may need:
+✓ Document A
+✓ Document B
+✓ Document C
+
+Allow users to mark documents:
+Ready
+Need to obtain
+Not sure
+
+Create a Document Readiness percentage/progress indicator.
+
+SERVICE JOURNEY
+
+For a selected service create:
+
+1. Understand your need
+2. Check requirements
+3. Check eligibility
+4. Prepare documents
+5. Apply through official source
+6. Follow up
+
+Allow users to save the journey under "My Services".
+
+DISCOVER PAGE
+
+Create categories:
+
+Education
+Scholarships
+Jobs & Employment
+Certificates
+Health
+Housing
+Agriculture
+Business
+Women & Child
+Senior Citizens
+Disability & Accessibility
+Transport
+Social Welfare
+Local/State Services
+Other
+
+Add search and filters.
+
+MY SERVICES
+
+Create a dashboard containing:
+
+Saved services
+Active service journeys
+Documents to prepare
+Recently viewed schemes
+Important reminders
+
+NOTIFICATIONS
+
+Create useful reminders such as:
+
+"Your saved service is waiting for document preparation."
+
+Do not create fake government deadlines or fake application
+status.
+
+VOICE
+
+Add microphone input where browser speech recognition is available.
+
+Support:
+English
+Hindi
+Telugu
+
+Allow users to switch language.
+
+CHAT FEATURES
+
+Add:
+
+New conversation
+Conversation history
+Search conversations
+Clear conversation
+Copy response
+Share response
+Suggested questions
+Typing/loading animation
+Error handling
+Retry
+
+HOME PAGE
+
+Keep the current SEVA AI visual design.
+
+Make the main input prominent:
+
+"What do you need help with?"
+
+Examples underneath:
+
+"Find scholarships for me"
+"How can I get a certificate?"
+"Find schemes for my family"
+"I need employment support"
+"Help me apply for a government service"
+
+Include a microphone button and Send button.
+
+AGENTIC WORKFLOW
+
+Implement the application conceptually as cooperating agents:
+
+1. Intent Agent
+2. Profile Agent
+3. Service Discovery Agent
+4. Eligibility Agent
+5. Document Agent
+6. Guidance Agent
+7. Follow-up Agent
+
+Show users only safe high-level activity such as:
+
+Understanding your request...
+Finding relevant services...
+Checking requirements...
+Preparing your next steps...
+
+Do NOT expose hidden chain-of-thought or internal reasoning.
+
+DATA AND TRUST
+
+Government scheme/service information must come from
+verified sources whenever possible.
+
+Prioritize official government sources such as:
+myScheme
+India.gov.in
+official Central Government websites
+official State Government websites
+official department portals
+
+Every service should store:
+
+name
+description
+authority
+state/central
+eligibility
+benefits
+documents
+application URL
+official source
+last verified date
+verification status
+
+Never invent:
+government schemes
+eligibility requirements
+benefits
+deadlines
+fees
+application URLs
+application status
+
+If information cannot be verified, clearly say:
+"Please verify this information on the official government website."
+
+SECURITY AND PRIVACY
+
+Do not request or store:
+passwords
+OTP
+bank PIN
+UPI PIN
+Aadhaar number unless absolutely required by a verified
+application flow, and preferably direct users to the official
+government website instead.
+
+Do not pretend to submit government applications.
+Instead, guide the user to the official application portal.
+
+DESIGN
+
+Make the app feel like a real consumer application:
+
+mobile-first
+clean cards
+smooth transitions
+modern chat UI
+bottom navigation on mobile
+sidebar navigation on desktop
+accessible typography
+clear icons
+loading states
+empty states
+error states
+responsive design
+
+Navigation:
+
+Home
+Discover
+Ask SEVA
+My Services
+Documents
+Notifications
+Profile
+
+MOST IMPORTANT:
+
+The user should be able to type almost any public-service
+question into SEVA AI and receive a conversational response,
+follow-up questions, relevant services/schemes, eligibility
+guidance, document preparation and an official next step.
+
+Do not make it merely a static demo.
+Make the navigation, forms, chat interactions and profile
+experience functional.
