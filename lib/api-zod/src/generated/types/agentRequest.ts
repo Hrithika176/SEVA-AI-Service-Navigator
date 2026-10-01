@@ -12,4 +12,10 @@ export interface AgentRequest {
      * @maxLength 500
      */
   request: string;
+  /**
+     * @minLength 8
+     * @maxLength 100
+     * @pattern ^[A-Za-z0-9_-]+$
+     */
+  session_id?: string;
 }

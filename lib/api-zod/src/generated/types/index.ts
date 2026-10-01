@@ -7,7 +7,12 @@
  */
 
 export * from './activity';
+export * from './agentDocuments';
 export * from './agentEvent';
+export * from './agentFollowUp';
+export * from './agentGuidance';
+export * from './agentGuidanceStatus';
+export * from './agentIntent';
 export * from './agentRequest';
 export * from './agentResult';
 export * from './agentSession';
@@ -17,14 +22,18 @@ export * from './analyticsSummaryMissingInformationItem';
 export * from './dashboardSummary';
 export * from './documentInput';
 export * from './documentUpdate';
+export * from './getAgentSessionParams';
 export * from './healthStatus';
 export * from './journey';
 export * from './journeyInput';
 export * from './journeyUpdate';
+export * from './listJourneysParams';
 export * from './listServicesParams';
 export * from './notification';
 export * from './outdatedReport';
 export * from './outdatedReportInput';
+export * from './requirementCheck';
+export * from './requirementCheckStatus';
 export * from './service';
 export * from './serviceVerificationInput';
 export * from './userDocument';

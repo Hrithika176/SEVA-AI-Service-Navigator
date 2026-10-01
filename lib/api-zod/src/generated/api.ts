@@ -151,6 +151,17 @@ export const UpdateServiceVerificationResponse = zod.object({
 /**
  * @summary List saved and active service journeys
  */
+export const listJourneysQuerySessionIdMin = 8;
+export const listJourneysQuerySessionIdMax = 100;
+
+
+export const listJourneysQuerySessionIdRegExp = new RegExp('^[A-Za-z0-9_-]+$');
+
+
+export const ListJourneysQueryParams = zod.object({
+  "session_id": zod.coerce.string().min(listJourneysQuerySessionIdMin).max(listJourneysQuerySessionIdMax).regex(listJourneysQuerySessionIdRegExp).optional()
+})
+
 export const ListJourneysResponseItem = zod.object({
   "id": zod.string(),
   "service_id": zod.string(),
@@ -190,11 +201,19 @@ export const UpdateJourneyParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const updateJourneyBodySessionIdMin = 8;
+export const updateJourneyBodySessionIdMax = 100;
+
+
+export const updateJourneyBodySessionIdRegExp = new RegExp('^[A-Za-z0-9_-]+$');
+
+
 export const UpdateJourneyBody = zod.object({
   "status": zod.string().optional(),
   "progress": zod.number().int().optional(),
   "current_stage": zod.string().optional(),
-  "next_action": zod.string().optional()
+  "next_action": zod.string().optional(),
+  "session_id": zod.string().min(updateJourneyBodySessionIdMin).max(updateJourneyBodySessionIdMax).regex(updateJourneyBodySessionIdRegExp).optional()
 })
 
 export const UpdateJourneyResponse = zod.object({
@@ -270,8 +289,19 @@ export const DeleteDocumentResponse = zod.void()
 
 
 /**
- * @summary Get the current safe agent activity state
+ * @summary Get the safe agent activity state for a browser session
  */
+export const getAgentSessionQuerySessionIdMin = 8;
+export const getAgentSessionQuerySessionIdMax = 100;
+
+
+export const getAgentSessionQuerySessionIdRegExp = new RegExp('^[A-Za-z0-9_-]+$');
+
+
+export const GetAgentSessionQueryParams = zod.object({
+  "session_id": zod.coerce.string().min(getAgentSessionQuerySessionIdMin).max(getAgentSessionQuerySessionIdMax).regex(getAgentSessionQuerySessionIdRegExp)
+})
+
 export const GetAgentSessionResponse = zod.object({
   "id": zod.string(),
   "status": zod.string(),
@@ -291,18 +321,59 @@ export const GetAgentSessionResponse = zod.object({
 export const analyzeRequestBodyRequestMin = 3;
 export const analyzeRequestBodyRequestMax = 500;
 
+export const analyzeRequestBodySessionIdMin = 8;
+export const analyzeRequestBodySessionIdMax = 100;
+
+
+export const analyzeRequestBodySessionIdRegExp = new RegExp('^[A-Za-z0-9_-]+$');
 
 
 export const AnalyzeRequestBody = zod.object({
-  "request": zod.string().min(analyzeRequestBodyRequestMin).max(analyzeRequestBodyRequestMax)
+  "request": zod.string().min(analyzeRequestBodyRequestMin).max(analyzeRequestBodyRequestMax),
+  "session_id": zod.string().min(analyzeRequestBodySessionIdMin).max(analyzeRequestBodySessionIdMax).regex(analyzeRequestBodySessionIdRegExp).optional()
 })
 
 export const AnalyzeRequestResponse = zod.object({
   "request": zod.string(),
+  "session_id": zod.string(),
   "category": zod.string(),
   "service_ids": zod.array(zod.string()),
   "missing_information": zod.array(zod.string()),
-  "disclaimer": zod.string()
+  "disclaimer": zod.string(),
+  "intent": zod.object({
+  "category": zod.string(),
+  "purpose": zod.string(),
+  "location": zod.string(),
+  "user_type": zod.string(),
+  "missing_information": zod.array(zod.string())
+}),
+  "requirement_checks": zod.array(zod.object({
+  "requirement": zod.string(),
+  "status": zod.enum(['provided', 'not_provided'])
+})),
+  "documents": zod.object({
+  "required": zod.array(zod.string()),
+  "available": zod.array(zod.string()),
+  "missing": zod.array(zod.string()),
+  "uncertain": zod.array(zod.string())
+}),
+  "guidance": zod.object({
+  "status": zod.enum(['ready', 'verification_required']),
+  "title": zod.string(),
+  "message": zod.string(),
+  "next_step": zod.string()
+}),
+  "follow_up": zod.object({
+  "journey_id": zod.string(),
+  "status": zod.string(),
+  "current_stage": zod.string(),
+  "next_incomplete_step": zod.string()
+}),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "label": zod.string(),
+  "status": zod.string()
+}))
 })
 
 

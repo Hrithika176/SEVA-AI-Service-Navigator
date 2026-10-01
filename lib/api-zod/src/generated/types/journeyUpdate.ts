@@ -11,4 +11,10 @@ export interface JourneyUpdate {
   progress?: number;
   current_stage?: string;
   next_action?: string;
+  /**
+     * @minLength 8
+     * @maxLength 100
+     * @pattern ^[A-Za-z0-9_-]+$
+     */
+  session_id?: string;
 }

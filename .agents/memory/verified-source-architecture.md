@@ -7,4 +7,8 @@ Service discovery and agent matches must use service records that carry an autho
 
 **Why:** Public-service guidance can cause real harm when a stale or invented portal is presented as authoritative. Demo records are useful for product testing but must never look like real government schemes.
 
-**How to apply:** Keep source metadata in the service catalog/API contract, show provenance on every result, label any non-verified record `Verification required`, and route source changes through an admin verification workflow.
+Persistent edits to authoritative service records require authenticated admin authorization. Until that exists, database-backed source records must remain read-only through public endpoints.
+
+**Why:** An unauthenticated edit could replace a real authority or official destination and contaminate later agent guidance.
+
+**How to apply:** Keep source metadata in the service catalog/API contract, show provenance on every result, label any non-verified record `Verification required`, and route persistent source changes through an authenticated admin verification workflow.

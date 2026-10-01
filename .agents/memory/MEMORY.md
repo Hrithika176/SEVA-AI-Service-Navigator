@@ -1,1 +1,1 @@
-- [Verified service sources](verified-source-architecture.md) — service discovery must return catalog-backed source metadata, never generated official URLs.
+- [Verified service sources](verified-source-architecture.md) — discovery uses catalog-backed provenance; persistent source edits need authenticated admin access.

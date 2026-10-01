@@ -25,25 +25,30 @@ SEVA AI helps people describe a public-service need, find potentially relevant v
 - `artifacts/seva-ai/src/App.tsx` — responsive product shell, routes, screens, and client interactions
 - `artifacts/seva-ai/src/index.css` — SEVA visual system and responsive styles
 - `lib/api-spec/openapi.yaml` — source of truth for the service-source, journey, document, agent, notification, dashboard, and analytics API
-- `artifacts/api-server/src/routes/seva.ts` — validated demo API handlers, source verification updates, and outdated-information reports
+- `artifacts/api-server/src/routes/seva.ts` — service, agent, journey, and document API handlers plus freshness reports
 - `artifacts/api-server/src/lib/seva-store.ts` — clearly labeled demo records and in-memory prototype state
+- `artifacts/api-server/src/lib/service-catalog.ts` — PostgreSQL service catalog plus explicitly marked demo records
+- `artifacts/api-server/src/lib/agents/` — deterministic request pipeline for intent, verified discovery, requirements, documents, guidance, and follow-up
 - `lib/db/src/schema/index.ts` — Drizzle schema for users, services, sources, journeys, documents, agent events, notifications, and saved services
 
 ## Architecture decisions
 
 - Demo service records are explicitly marked `is_demo` and use source-first copy; the UI never presents demo data as guaranteed eligibility.
 - Service results carry an explicit source name, source type, official URL, last-verified value, and verification status; an unverified record must show `Verification required`.
-- Official URLs are curated data supplied by the service catalog or admin workflow; the agent does not invent or infer URLs.
+- Official URLs are curated data supplied by the service catalog; the agent does not invent or infer URLs.
 - The first build keeps document state only and does not store document bytes; object storage can be added later with explicit consent.
-- The API is contract-first through OpenAPI and generated React Query hooks, while the demo server uses an in-memory store so the initial journey is usable without authentication.
-- High-level agent activity is exposed as safe status events only; hidden reasoning is not shown.
+- Verified discovery reads only active, non-demo, verified PostgreSQL records with HTTPS URLs and required source metadata. Demo records remain excluded.
+- Agent processing is deterministic and source-grounded; there are no external AI API calls. Requirements and document guidance come only from matched verified records.
+- Agent events and session-scoped journey progress are persisted under a browser-generated session ID. Event labels are safe status metadata and never contain the raw request.
+- The API is contract-first through OpenAPI and generated React Query hooks. Demo records and prototype documents remain in memory.
+- Persistent edits to PostgreSQL service records are blocked until authenticated admin access is configured; the current editor can only update in-memory demo metadata.
 
 ## Product
 
 - Responsive SEVA AI dashboard with home, service discovery, service detail, My Services, agent activity, document readiness, notifications, profile preferences, analytics, and admin verification views.
-- Demo journey for an education-support request with official-source reminders, readiness checks, and next-step guidance.
+- Demo journey for an education-support request with official-source reminders, readiness checks, and next-step guidance; live agent requests use the verified database catalog.
 - Major actions are wired through generated API hooks: searching, analyzing requests, saving journeys, updating journeys, adding/toggling/removing documents, and marking notifications read.
-- Service pages expose official-source metadata and an outdated-information report; `/admin` provides the demo source-record editing flow.
+- Service pages expose official-source metadata and an outdated-information report; `/admin` provides demo source editing, while database-backed source changes are rejected until authenticated admin access is configured.
 
 ## User preferences
 

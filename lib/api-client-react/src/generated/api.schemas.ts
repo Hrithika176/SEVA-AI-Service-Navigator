@@ -80,6 +80,12 @@ export interface JourneyUpdate {
   progress?: number;
   current_stage?: string;
   next_action?: string;
+  /**
+     * @minLength 8
+     * @maxLength 100
+     * @pattern ^[A-Za-z0-9_-]+$
+     */
+  session_id?: string;
 }
 
 export interface UserDocument {
@@ -119,14 +125,77 @@ export interface AgentRequest {
      * @maxLength 500
      */
   request: string;
+  /**
+     * @minLength 8
+     * @maxLength 100
+     * @pattern ^[A-Za-z0-9_-]+$
+     */
+  session_id?: string;
+}
+
+export interface AgentIntent {
+  category: string;
+  purpose: string;
+  location: string;
+  user_type: string;
+  missing_information: string[];
+}
+
+export type RequirementCheckStatus = typeof RequirementCheckStatus[keyof typeof RequirementCheckStatus];
+
+
+export const RequirementCheckStatus = {
+  provided: 'provided',
+  not_provided: 'not_provided',
+} as const;
+
+export interface RequirementCheck {
+  requirement: string;
+  status: RequirementCheckStatus;
+}
+
+export interface AgentDocuments {
+  required: string[];
+  available: string[];
+  missing: string[];
+  uncertain: string[];
+}
+
+export type AgentGuidanceStatus = typeof AgentGuidanceStatus[keyof typeof AgentGuidanceStatus];
+
+
+export const AgentGuidanceStatus = {
+  ready: 'ready',
+  verification_required: 'verification_required',
+} as const;
+
+export interface AgentGuidance {
+  status: AgentGuidanceStatus;
+  title: string;
+  message: string;
+  next_step: string;
+}
+
+export interface AgentFollowUp {
+  journey_id: string;
+  status: string;
+  current_stage: string;
+  next_incomplete_step: string;
 }
 
 export interface AgentResult {
   request: string;
+  session_id: string;
   category: string;
   service_ids: string[];
   missing_information: string[];
   disclaimer: string;
+  intent: AgentIntent;
+  requirement_checks: RequirementCheck[];
+  documents: AgentDocuments;
+  guidance: AgentGuidance;
+  follow_up: AgentFollowUp;
+  events: AgentEvent[];
 }
 
 export interface Notification {
@@ -177,5 +246,23 @@ export type ListServicesParams = {
 q?: string;
 category?: string;
 state?: string;
+};
+
+export type ListJourneysParams = {
+/**
+ * @minLength 8
+ * @maxLength 100
+ * @pattern ^[A-Za-z0-9_-]+$
+ */
+session_id?: string;
+};
+
+export type GetAgentSessionParams = {
+/**
+ * @minLength 8
+ * @maxLength 100
+ * @pattern ^[A-Za-z0-9_-]+$
+ */
+session_id: string;
 };
 

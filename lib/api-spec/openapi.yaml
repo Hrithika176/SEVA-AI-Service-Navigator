@@ -144,6 +144,15 @@ paths:
       operationId: listJourneys
       tags: [journeys]
       summary: List saved and active service journeys
+      parameters:
+        - name: session_id
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 100
+            pattern: "^[A-Za-z0-9_-]+$"
       responses:
         "200":
           description: Journey list
@@ -266,7 +275,16 @@ paths:
     get:
       operationId: getAgentSession
       tags: [agent]
-      summary: Get the current safe agent activity state
+      summary: Get the safe agent activity state for a browser session
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 100
+            pattern: "^[A-Za-z0-9_-]+$"
       responses:
         "200":
           description: Agent session
@@ -444,6 +462,7 @@ components:
         progress: { type: integer }
         current_stage: { type: string }
         next_action: { type: string }
+        session_id: { type: string, minLength: 8, maxLength: 100, pattern: "^[A-Za-z0-9_-]+$" }
     UserDocument:
       type: object
       required: [id, name, category, status, updated_at]
@@ -486,11 +505,62 @@ components:
       required: [request]
       properties:
         request: { type: string, minLength: 3, maxLength: 500 }
+        session_id: { type: string, minLength: 8, maxLength: 100, pattern: "^[A-Za-z0-9_-]+$" }
+    AgentIntent:
+      type: object
+      required: [category, purpose, location, user_type, missing_information]
+      properties:
+        category: { type: string }
+        purpose: { type: string }
+        location: { type: string }
+        user_type: { type: string }
+        missing_information:
+          type: array
+          items: { type: string }
+    RequirementCheck:
+      type: object
+      required: [requirement, status]
+      properties:
+        requirement: { type: string }
+        status: { type: string, enum: [provided, not_provided] }
+    AgentDocuments:
+      type: object
+      required: [required, available, missing, uncertain]
+      properties:
+        required:
+          type: array
+          items: { type: string }
+        available:
+          type: array
+          items: { type: string }
+        missing:
+          type: array
+          items: { type: string }
+        uncertain:
+          type: array
+          items: { type: string }
+    AgentGuidance:
+      type: object
+      required: [status, title, message, next_step]
+      properties:
+        status: { type: string, enum: [ready, verification_required] }
+        title: { type: string }
+        message: { type: string }
+        next_step: { type: string }
+    AgentFollowUp:
+      type: object
+      required: [journey_id, status, current_stage, next_incomplete_step]
+      properties:
+        journey_id: { type: string }
+        status: { type: string }
+        current_stage: { type: string }
+        next_incomplete_step: { type: string }
     AgentResult:
       type: object
-      required: [request, category, service_ids, missing_information, disclaimer]
+      required: [request, session_id, category, service_ids, missing_information, disclaimer, intent, requirement_checks, documents, guidance, follow_up, events]
       properties:
         request: { type: string }
+        session_id: { type: string }
         category: { type: string }
         service_ids:
           type: array
@@ -499,6 +569,20 @@ components:
           type: array
           items: { type: string }
         disclaimer: { type: string }
+        intent:
+          $ref: "#/components/schemas/AgentIntent"
+        requirement_checks:
+          type: array
+          items: { $ref: "#/components/schemas/RequirementCheck" }
+        documents:
+          $ref: "#/components/schemas/AgentDocuments"
+        guidance:
+          $ref: "#/components/schemas/AgentGuidance"
+        follow_up:
+          $ref: "#/components/schemas/AgentFollowUp"
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/AgentEvent" }
     Notification:
       type: object
       required: [id, title, body, category, time, unread]

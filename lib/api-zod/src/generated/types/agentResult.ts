@@ -5,11 +5,24 @@
  * SEVA AI public service navigator API
  * OpenAPI spec version: 0.1.0
  */
+import type { AgentDocuments } from './agentDocuments';
+import type { AgentEvent } from './agentEvent';
+import type { AgentFollowUp } from './agentFollowUp';
+import type { AgentGuidance } from './agentGuidance';
+import type { AgentIntent } from './agentIntent';
+import type { RequirementCheck } from './requirementCheck';
 
 export interface AgentResult {
   request: string;
+  session_id: string;
   category: string;
   service_ids: string[];
   missing_information: string[];
   disclaimer: string;
+  intent: AgentIntent;
+  requirement_checks: RequirementCheck[];
+  documents: AgentDocuments;
+  guidance: AgentGuidance;
+  follow_up: AgentFollowUp;
+  events: AgentEvent[];
 }

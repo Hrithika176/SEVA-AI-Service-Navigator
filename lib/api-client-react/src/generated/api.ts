@@ -28,10 +28,12 @@ import type {
   DashboardSummary,
   DocumentInput,
   DocumentUpdate,
+  GetAgentSessionParams,
   HealthStatus,
   Journey,
   JourneyInput,
   JourneyUpdate,
+  ListJourneysParams,
   ListServicesParams,
   Notification,
   OutdatedReport,
@@ -485,20 +487,27 @@ export const useUpdateServiceVerification = <TError = ErrorType<void>,
       return useMutation(getUpdateServiceVerificationMutationOptions(options));
     }
 
-export const getListJourneysUrl = () => {
+export const getListJourneysUrl = (params?: ListJourneysParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/journeys`
+  return stringifiedParams.length > 0 ? `/api/journeys?${stringifiedParams}` : `/api/journeys`
 }
 
 /**
  * @summary List saved and active service journeys
  */
-export const listJourneys = async ( options?: Parameters<typeof customFetch>[1]): Promise<Journey[]> => {
+export const listJourneys = async (params?: ListJourneysParams, options?: Parameters<typeof customFetch>[1]): Promise<Journey[]> => {
 
-  return customFetch<Journey[]>(getListJourneysUrl(),
+  return customFetch<Journey[]>(getListJourneysUrl(params),
   {
     ...options,
     method: 'GET'
@@ -511,23 +520,23 @@ export const listJourneys = async ( options?: Parameters<typeof customFetch>[1])
 
 
 
-export const getListJourneysQueryKey = () => {
+export const getListJourneysQueryKey = (params?: ListJourneysParams,) => {
     return [
-    `/api/journeys`
+    `/api/journeys`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListJourneysQueryOptions = <TData = Awaited<ReturnType<typeof listJourneys>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJourneys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListJourneysQueryOptions = <TData = Awaited<ReturnType<typeof listJourneys>>, TError = ErrorType<unknown>>(params?: ListJourneysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJourneys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListJourneysQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListJourneysQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJourneys>>> = ({ signal }) => listJourneys({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJourneys>>> = ({ signal }) => listJourneys(params, { signal, ...requestOptions });
 
 
 
@@ -545,11 +554,11 @@ export type ListJourneysQueryError = ErrorType<unknown>
  */
 
 export function useListJourneys<TData = Awaited<ReturnType<typeof listJourneys>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJourneys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListJourneysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJourneys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListJourneysQueryOptions(options)
+  const queryOptions = getListJourneysQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1067,20 +1076,27 @@ export const useDeleteDocument = <TError = ErrorType<unknown>,
       return useMutation(getDeleteDocumentMutationOptions(options));
     }
 
-export const getGetAgentSessionUrl = () => {
+export const getGetAgentSessionUrl = (params: GetAgentSessionParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/agent/session`
+  return stringifiedParams.length > 0 ? `/api/agent/session?${stringifiedParams}` : `/api/agent/session`
 }
 
 /**
- * @summary Get the current safe agent activity state
+ * @summary Get the safe agent activity state for a browser session
  */
-export const getAgentSession = async ( options?: Parameters<typeof customFetch>[1]): Promise<AgentSession> => {
+export const getAgentSession = async (params: GetAgentSessionParams, options?: Parameters<typeof customFetch>[1]): Promise<AgentSession> => {
 
-  return customFetch<AgentSession>(getGetAgentSessionUrl(),
+  return customFetch<AgentSession>(getGetAgentSessionUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1093,23 +1109,23 @@ export const getAgentSession = async ( options?: Parameters<typeof customFetch>[
 
 
 
-export const getGetAgentSessionQueryKey = () => {
+export const getGetAgentSessionQueryKey = (params?: GetAgentSessionParams,) => {
     return [
-    `/api/agent/session`
+    `/api/agent/session`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetAgentSessionQueryOptions = <TData = Awaited<ReturnType<typeof getAgentSession>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetAgentSessionQueryOptions = <TData = Awaited<ReturnType<typeof getAgentSession>>, TError = ErrorType<unknown>>(params: GetAgentSessionParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAgentSessionQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetAgentSessionQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAgentSession>>> = ({ signal }) => getAgentSession({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAgentSession>>> = ({ signal }) => getAgentSession(params, { signal, ...requestOptions });
 
 
 
@@ -1123,15 +1139,15 @@ export type GetAgentSessionQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get the current safe agent activity state
+ * @summary Get the safe agent activity state for a browser session
  */
 
 export function useGetAgentSession<TData = Awaited<ReturnType<typeof getAgentSession>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params: GetAgentSessionParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetAgentSessionQueryOptions(options)
+  const queryOptions = getGetAgentSessionQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

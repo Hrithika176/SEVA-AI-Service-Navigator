@@ -11,6 +11,7 @@ import {
   Settings2, ShieldCheck, Sparkles, Target, X, Zap,
 } from 'lucide-react';
 import {
+  getGetAgentSessionQueryKey,
   getGetServiceQueryKey,
   getListDocumentsQueryKey,
   getListJourneysQueryKey,
@@ -36,6 +37,7 @@ import {
   useUpdateServiceVerification,
   useUpdateJourney,
   type Activity,
+  type AgentResult,
   type AnalyticsSummary,
   type DashboardSummary,
   type Journey,
@@ -65,6 +67,23 @@ const timeLabel = (value?: string) => {
     ? new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' }).format(parsed)
     : value || 'Recently';
 };
+function getBrowserAgentSessionId() {
+  if (typeof window === 'undefined') return 'session-browser';
+  const key = 'seva-agent-session-id';
+  const existing = window.sessionStorage.getItem(key);
+  if (existing) return existing;
+  const created = `session-${window.crypto.randomUUID()}`;
+  window.sessionStorage.setItem(key, created);
+  return created;
+}
+const agentEventTitle = (label: string) => ({
+  REQUEST_RECEIVED: 'Request received',
+  INTENT_IDENTIFIED: 'Intent identified',
+  SERVICES_FOUND: 'Service discovery completed',
+  REQUIREMENTS_CHECKED: 'Requirements checked',
+  DOCUMENTS_IDENTIFIED: 'Documents identified',
+  NEXT_STEP_PREPARED: 'Next step prepared',
+}[label] ?? label);
 const isVerified = (service: Service) => (service.verification_status || '').toLowerCase() === 'verified';
 const verificationLabel = (service: Service) => isVerified(service) ? 'Verified' : 'Verification required';
 
@@ -168,7 +187,8 @@ function Home() {
   return <div className="space-y-8 animate-rise">
     <section className="warm-glow civic-grid relative overflow-hidden rounded-[28px] border border-card-border px-6 py-8 sm:px-10 sm:py-11">
       <div className="relative max-w-3xl"><div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.16em] text-primary"><span className="size-2 animate-pulse-soft rounded-full bg-primary" />A calmer way to access public services</div><h1 className="font-display max-w-2xl text-4xl font-extrabold leading-[1.04] tracking-[-.04em] sm:text-6xl">One clear next step,<br /><span className="text-primary">not a maze of portals.</span></h1><p className="mt-5 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">SEVA helps you find government services, understand what to prepare, and move forward with information you can verify.</p><div className="mt-7 flex max-w-2xl flex-col gap-2 rounded-2xl border border-card-border bg-card p-2 shadow-lg sm:flex-row"><div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search size={20} className="shrink-0 text-primary" /><input value={request} onChange={(e) => setRequest(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitRequest()} className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Tell us what you need help with..." data-testid="input-home-request" /><span className="hidden rounded-md bg-muted px-2 py-1 font-mono text-[10px] text-muted-foreground sm:block">Enter</span></div><button onClick={submitRequest} disabled={analyze.isPending} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60" data-testid="button-home-request">{analyze.isPending ? 'Reviewing...' : 'Find my next step'} <ArrowRight size={16} /></button></div><div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-muted-foreground"><span className="inline-flex items-center gap-1.5"><LockKeyhole size={13} className="text-primary" /> No hidden reasoning</span><span className="inline-flex items-center gap-1.5"><ShieldCheck size={13} className="text-primary" /> Official sources shown</span></div></div><div className="absolute -right-16 -top-14 hidden size-72 rounded-full border-[22px] border-accent/15 sm:block" /><div className="absolute right-9 top-16 hidden size-36 rounded-full border border-primary/20 sm:block" /></section>
-    {demoResult && <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5"><div className="flex items-start justify-between gap-4"><div><div className="text-[10px] font-bold uppercase tracking-[.18em] text-primary">Demo match ready</div><h2 className="mt-1 font-display text-lg font-bold">{demoResult.category || 'A few possible services'}</h2><p className="mt-1 text-sm text-muted-foreground">{demoResult.disclaimer || 'Review each official source before you apply.'}</p></div><button onClick={() => setDemoResult(undefined)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-card" data-testid="button-dismiss-demo"><X size={17} /></button></div><div className="mt-4 flex flex-wrap gap-2">{demoResult.service_ids?.map((id) => <Link href={`/services/${id}`} key={id} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-card px-3 py-2 text-xs font-bold text-primary" data-testid={`link-demo-service-${id}`}>Review service <ArrowRight size={13} /></Link>)}{demoResult.missing_information?.map((item) => <span key={item} className="rounded-lg bg-accent/20 px-3 py-2 text-xs font-semibold">{item}</span>)}</div></div>}
+    {analyze.error && <p className="mt-3 rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-sm text-destructive" role="alert">SEVA could not complete this request. Please retry in a moment.</p>}
+    {demoResult && <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5"><div className="flex items-start justify-between gap-4"><div><div className="text-[10px] font-bold uppercase tracking-[.18em] text-primary">Catalog match ready</div><h2 className="mt-1 font-display text-lg font-bold">{demoResult.category || 'A few possible services'}</h2><p className="mt-1 text-sm text-muted-foreground">{demoResult.disclaimer || 'Review each official source before you apply.'}</p></div><button onClick={() => setDemoResult(undefined)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-card" data-testid="button-dismiss-demo"><X size={17} /></button></div><div className="mt-4 flex flex-wrap gap-2">{demoResult.service_ids?.map((id) => <Link href={`/services/${id}`} key={id} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-card px-3 py-2 text-xs font-bold text-primary" data-testid={`link-demo-service-${id}`}>Review service <ArrowRight size={13} /></Link>)}{demoResult.missing_information?.map((item) => <span key={item} className="rounded-lg bg-accent/20 px-3 py-2 text-xs font-semibold">{item}</span>)}</div></div>}
     <QueryState loading={summaryQuery.isLoading} error={summaryQuery.error} onRetry={() => summaryQuery.refetch()} label="overview"><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active journeys" value={summary?.active_journeys ?? 0} note="Keep moving at your pace" icon={Target} /><StatCard label="Saved services" value={summary?.saved_services ?? 0} note="Your shortlist, in one place" icon={BookOpen} tone="orange" /><StatCard label="Document readiness" value={`${summary?.document_readiness ?? 0}%`} note="Based on your checklist" icon={ClipboardCheck} /><StatCard label="Pending steps" value={summary?.pending_steps ?? 0} note="Small steps add up" icon={Clock3} tone="navy" /></div></QueryState>
     <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]"><section className="rounded-2xl border border-card-border bg-card p-5 sm:p-6"><div className="flex items-center justify-between"><div><div className="text-[10px] font-bold uppercase tracking-[.18em] text-muted-foreground">Suggested for you</div><h2 className="mt-1 font-display text-xl font-extrabold">Start with a service</h2></div><Link href="/discover" className="inline-flex items-center gap-1 text-xs font-bold text-primary" data-testid="link-see-all-services">See all <ArrowRight size={14} /></Link></div><QueryState loading={servicesQuery.isLoading} error={servicesQuery.error} onRetry={() => servicesQuery.refetch()} label="services"><div className="mt-5 grid gap-3">{services.length ? services.map((service) => <ServiceRow key={service.id} service={service} />) : <EmptyState icon={Landmark} title="Your service shelf is ready" body="Search for a service when you are ready to begin." actionLabel="Discover services" actionHref="/discover" />}</div></QueryState></section><section className="rounded-2xl border border-card-border bg-card p-5 sm:p-6"><div className="flex items-center gap-2"><ActivityIcon size={16} className="text-primary" /><h2 className="font-display text-lg font-extrabold">Recent activity</h2></div><QueryState loading={activityQuery.isLoading} error={activityQuery.error} onRetry={() => activityQuery.refetch()} label="activity"><div className="mt-5 space-y-5">{activities.slice(0, 4).map((item) => <div key={item.id} className="flex gap-3"><div className="mt-1 grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-foreground"><Check size={13} /></div><div><p className="text-sm font-bold">{item.label}</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.detail}</p><p className="mt-1 font-mono text-[10px] text-muted-foreground">{timeLabel(item.time)}</p></div></div>)}{!activities.length && <EmptyState icon={ActivityIcon} title="No activity yet" body="Your first search or saved journey will appear here." />}</div></QueryState></section></div>
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/50 px-5 py-4 text-sm"><div className="flex items-center gap-3"><span className={cx('size-2 rounded-full', health.isError ? 'bg-destructive' : 'bg-primary')} /><span className="font-semibold">SEVA service status: {health.isError ? 'Needs attention' : health.isLoading ? 'Checking' : 'Operational'}</span></div><span className="text-xs text-muted-foreground">Information is a guide, not a promise of eligibility.</span></div>
@@ -228,14 +248,41 @@ function SectionTitle({ icon: Icon, title }: { icon: typeof Check; title: string
 function InfoList({ title, items }: { title: string; items: string[] }) { return <div><h3 className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">{title}</h3><ul className="mt-3 space-y-2">{(items.length ? items : ['No additional information listed']).map((item, index) => <li key={`${item}-${index}`} className="flex gap-2 text-sm leading-5"><CheckCircle2 size={15} className="mt-0.5 shrink-0 text-primary" />{item}</li>)}</ul></div>; }
 
 function MyServices() {
-  const journeysQuery = useListJourneys();
+  const [sessionId] = useState(getBrowserAgentSessionId);
+  const journeysQuery = useListJourneys({ session_id: sessionId });
   const updateJourney = useUpdateJourney();
   const qc = useQueryClient();
   const journeys: Journey[] = journeysQuery.data ?? [];
-  const update = (journey: Journey) => updateJourney.mutate({ id: journey.id, data: { status: journey.status === 'completed' ? 'active' : 'completed', progress: journey.status === 'completed' ? journey.progress : 100 } }, { onSuccess: () => qc.invalidateQueries({ queryKey: getListJourneysQueryKey() }) });
+  const update = (journey: Journey) => updateJourney.mutate({ id: journey.id, data: { status: journey.status === 'completed' ? 'active' : 'completed', progress: journey.status === 'completed' ? journey.progress : 100, session_id: sessionId } }, { onSuccess: () => qc.invalidateQueries({ queryKey: getListJourneysQueryKey() }) });
   return <div className="animate-rise"><PageHeading eyebrow="Your workspace" title="My services" description="Keep track of the services you have saved and the next action for each journey." action={<Link href="/discover" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground" data-testid="link-add-service"><Plus size={15} /> Add a service</Link>} /><QueryState loading={journeysQuery.isLoading} error={journeysQuery.error} onRetry={() => journeysQuery.refetch()} label="journeys"><div className="grid gap-4 lg:grid-cols-2">{journeys.map((journey) => <JourneyCard key={journey.id} journey={journey} onUpdate={() => update(journey)} pending={updateJourney.isPending} />)}</div>{!journeys.length && <EmptyState icon={ListChecks} title="No journeys started" body="Find a service and save it here. You can return when it suits you." actionLabel="Discover services" actionHref="/discover" />}</QueryState><div className="mt-8 rounded-2xl border border-border bg-secondary/45 p-5"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-primary" size={18} /><div><p className="text-sm font-bold">A note on outcomes</p><p className="mt-1 text-xs leading-5 text-muted-foreground">SEVA helps you prepare and navigate. It does not submit applications or determine whether you qualify.</p></div></div></div></div>;
 }
-function JourneyCard({ journey, onUpdate, pending }: { journey: Journey; onUpdate: () => void; pending: boolean }) { return <div className="rounded-2xl border border-card-border bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><span className={cx('rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', journey.status === 'completed' ? 'bg-primary/10 text-primary' : 'bg-accent/20')}>{journey.status}</span><h2 className="mt-3 font-display text-xl font-extrabold">{journey.service_name}</h2></div><button className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label={`More actions for ${journey.service_name}`} data-testid={`button-journey-more-${journey.id}`}><MoreHorizontal size={18} /></button></div><div className="mt-5"><div className="mb-2 flex justify-between text-xs font-bold"><span>Journey progress</span><span className="text-primary">{journey.progress}%</span></div><div className="h-2 rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, journey.progress)}%` }} /></div></div><div className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-2"><div><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current stage</p><p className="mt-1 text-sm font-semibold">{journey.current_stage}</p></div><div><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next action</p><p className="mt-1 text-sm font-semibold">{journey.next_action}</p></div></div><div className="mt-5 flex items-center justify-between"><span className="text-[11px] text-muted-foreground">Updated {timeLabel(journey.last_activity)}</span><button onClick={onUpdate} disabled={pending} className="inline-flex items-center gap-2 rounded-lg border border-primary/25 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/5 disabled:opacity-50" data-testid={`button-update-journey-${journey.id}`}>{journey.status === 'completed' ? 'Reopen journey' : 'Mark complete'} <Check size={14} /></button></div></div>; }
+function JourneyCard({ journey, onUpdate, pending }: { journey: Journey; onUpdate: () => void; pending: boolean }) {
+  const isDemo = journey.service_id.startsWith('demo-');
+  return <div className="rounded-2xl border border-card-border bg-card p-5 shadow-sm">
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cx('rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', journey.status === 'completed' ? 'bg-primary/10 text-primary' : 'bg-accent/20')}>{journey.status}</span>
+          {isDemo && <span className="rounded-full bg-accent/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">Demo information</span>}
+        </div>
+        <h2 className="mt-3 font-display text-xl font-extrabold">{journey.service_name}</h2>
+      </div>
+      <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label={`More actions for ${journey.service_name}`} data-testid={`button-journey-more-${journey.id}`}><MoreHorizontal size={18} /></button>
+    </div>
+    <div className="mt-5">
+      <div className="mb-2 flex justify-between text-xs font-bold"><span>Journey progress</span><span className="text-primary">{journey.progress}%</span></div>
+      <div className="h-2 rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, journey.progress)}%` }} /></div>
+    </div>
+    <div className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+      <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current stage</p><p className="mt-1 text-sm font-semibold">{journey.current_stage}</p></div>
+      <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next action</p><p className="mt-1 text-sm font-semibold">{journey.next_action}</p></div>
+    </div>
+    <div className="mt-5 flex items-center justify-between">
+      <span className="text-[11px] text-muted-foreground">Updated {timeLabel(journey.last_activity)}</span>
+      <button onClick={onUpdate} disabled={pending} className="inline-flex items-center gap-2 rounded-lg border border-primary/25 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/5 disabled:opacity-50" data-testid={`button-update-journey-${journey.id}`}>{journey.status === 'completed' ? 'Reopen journey' : 'Mark complete'} <Check size={14} /></button>
+    </div>
+  </div>;
+}
 
 function Documents() {
   const query = useListDocuments();
@@ -254,14 +301,73 @@ function Documents() {
 }
 
 function Agent() {
-  const session = useGetAgentSession();
+  const [sessionId] = useState(getBrowserAgentSessionId);
   const analyze = useAnalyzeRequest();
+  const session = useGetAgentSession(
+    { session_id: sessionId },
+    { query: { queryKey: getGetAgentSessionQueryKey({ session_id: sessionId }), refetchInterval: analyze.isPending ? 700 : false } },
+  );
   const services = useListServices();
   const [request, setRequest] = useState('');
-  const [result, setResult] = useState<{ category?: string; disclaimer?: string; service_ids?: string[]; missing_information?: string[] }>();
-  const submit = () => { if (request.trim().length >= 3) analyze.mutate({ data: { request: request.trim() } }, { onSuccess: setResult }); };
+  const [result, setResult] = useState<AgentResult>();
+  const qc = useQueryClient();
+  const submit = () => {
+    if (request.trim().length < 3) return;
+    analyze.mutate(
+      { data: { request: request.trim(), session_id: sessionId } },
+      {
+        onSuccess: (response) => {
+          setResult(response);
+          void qc.invalidateQueries({ queryKey: getGetAgentSessionQueryKey({ session_id: sessionId }) });
+        },
+        onError: () => {
+          void qc.invalidateQueries({ queryKey: getGetAgentSessionQueryKey({ session_id: sessionId }) });
+        },
+      },
+    );
+  };
   const eventIcon = (status: string) => status === 'complete' ? <Check size={14} /> : status === 'active' ? <span className="size-2 animate-pulse-soft rounded-full bg-accent" /> : <Clock3 size={14} />;
-  return <div className="animate-rise"><PageHeading eyebrow="Guided agent" title="A safe second pair of eyes" description="Describe what you need in plain language. SEVA will return a category, possible services, and the information you may still need. It will not make decisions for you." /><div className="grid gap-6 xl:grid-cols-[1fr_.7fr]"><section className="rounded-[24px] border border-card-border bg-card p-6 sm:p-8"><div className="flex items-start gap-4"><span className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles size={21} /></span><div><h2 className="font-display text-xl font-extrabold">What are you trying to do?</h2><p className="mt-1 text-sm text-muted-foreground">For example: “I moved to a new city and need to update my address.”</p></div></div><textarea value={request} onChange={(e) => setRequest(e.target.value)} className="mt-6 min-h-[150px] w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-6 outline-none focus:border-primary" placeholder="Tell SEVA in your own words..." data-testid="textarea-agent-request" /><div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><span className="text-xs text-muted-foreground">Do not share Aadhaar numbers, passwords, or sensitive personal details.</span><button onClick={submit} disabled={analyze.isPending || request.trim().length < 3} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50" data-testid="button-analyze-request">{analyze.isPending ? 'Reviewing your request...' : 'Review my request'} <Send size={15} /></button></div>{result && <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/[.04] p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-primary">Transparent result</p><h3 className="mt-1 font-display text-lg font-extrabold">{result.category || 'Possible matches'}</h3></div><CheckCircle2 className="text-primary" size={20} /></div>{result.disclaimer && <p className="mt-3 text-sm leading-6 text-muted-foreground">{result.disclaimer}</p>}<div className="mt-4 grid gap-2">{result.service_ids?.map((id) => { const service = services.data?.find((item) => item.id === id); return <div key={id} className="rounded-xl border border-border bg-card p-3" data-testid={`card-agent-service-${id}`}><Link href={`/services/${id}`} className="flex items-center justify-between text-sm font-bold hover:text-primary" data-testid={`link-agent-service-${id}`}><span>{service?.name || id}</span><ArrowRight size={15} className="text-primary" /></Link>{service && <SourceSummary service={service} compact />}</div>; })}</div>{result.missing_information?.length ? <div className="mt-4 border-t border-border pt-4"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">May need clarification</p><div className="mt-2 flex flex-wrap gap-2">{result.missing_information.map((item) => <span key={item} className="rounded-lg bg-accent/20 px-2.5 py-1.5 text-xs font-semibold">{item}</span>)}</div></div> : null}</div>}</section><section className="rounded-[24px] border border-card-border bg-card p-6 sm:p-8"><div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-muted-foreground">Agent status</p><h2 className="mt-1 font-display text-xl font-extrabold">{session.data?.status || 'Ready when you are'}</h2></div><span className={cx('grid size-10 place-items-center rounded-xl', session.data?.status === 'active' ? 'bg-accent/25 text-foreground' : 'bg-primary/10 text-primary')}><ActivityIcon size={18} /></span></div><QueryState loading={session.isLoading} error={session.error} onRetry={() => session.refetch()} label="agent activity"><div className="mt-6 space-y-0">{(session.data?.events ?? []).map((event, index) => <div key={event.id} className="relative flex gap-3 pb-6 last:pb-0"><div className="relative z-10 grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-primary">{eventIcon(event.status)}</div>{index < (session.data?.events.length ?? 0) - 1 && <div className="absolute left-3.5 top-7 h-[calc(100%-12px)] w-px bg-border" />}<div><p className="text-sm font-bold">{event.label}</p><p className="mt-1 text-xs text-muted-foreground">{event.status}</p></div></div>)}{!session.data?.events?.length && <EmptyState icon={Sparkles} title="Agent is standing by" body="Your request will appear as a clear activity trail here." />}</div></QueryState></section></div></div>;
+  const agentEvents = (session.data?.events ?? []).slice(-6);
+  const documentGroups = result ? [
+    { label: 'Required', items: result.documents.required },
+    { label: 'Available', items: result.documents.available },
+    { label: 'Missing', items: result.documents.missing },
+    { label: 'Uncertain', items: result.documents.uncertain },
+  ] : [];
+  return <div className="animate-rise">
+    <PageHeading eyebrow="Guided agent" title="A safe second pair of eyes" description="SEVA runs a server-side sequence: identify intent, search verified service records, check requirements and documents, then prepare a source-grounded next step. It does not make decisions for you." />
+    <div className="grid gap-6 xl:grid-cols-[1fr_.7fr]">
+      <section className="rounded-[24px] border border-card-border bg-card p-6 sm:p-8">
+        <div className="flex items-start gap-4"><span className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles size={21} /></span><div><h2 className="font-display text-xl font-extrabold">What are you trying to do?</h2><p className="mt-1 text-sm text-muted-foreground">For example: “I moved to a new city and need to update my address.”</p></div></div>
+        <textarea value={request} onChange={(e) => setRequest(e.target.value)} className="mt-6 min-h-[150px] w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-6 outline-none focus:border-primary" placeholder="Tell SEVA in your own words..." data-testid="textarea-agent-request" />
+        <div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><span className="text-xs text-muted-foreground">Do not share Aadhaar numbers, passwords, or sensitive personal details.</span><button onClick={submit} disabled={analyze.isPending || request.trim().length < 3} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50" data-testid="button-analyze-request">{analyze.isPending ? 'Reviewing your request...' : 'Review my request'} <Send size={15} /></button></div>
+        {analyze.error && <p className="mt-3 rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-sm text-destructive" role="alert">SEVA could not complete the request. Your entry is still here; retry in a moment.</p>}
+        {result && <div className="mt-6 space-y-4 rounded-2xl border border-primary/20 bg-primary/[.04] p-5" data-testid="agent-result">
+          <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-primary">Structured result</p><h3 className="mt-1 font-display text-lg font-extrabold">{result.intent.category}</h3></div><CheckCircle2 className="text-primary" size={20} /></div>
+          <p className="text-sm leading-6 text-muted-foreground">{result.disclaimer}</p>
+          <div className="grid gap-2 rounded-xl border border-border bg-card p-3 sm:grid-cols-2">
+            <DetailMeta label="Purpose" value={result.intent.purpose} />
+            <DetailMeta label="Location" value={result.intent.location || 'Not provided'} />
+            <DetailMeta label="User type" value={result.intent.user_type || 'Not provided'} />
+            <DetailMeta label="Verified matches" value={String(result.service_ids.length)} />
+          </div>
+          <div className={cx('rounded-xl p-4', result.guidance.status === 'verification_required' ? 'border border-accent/40 bg-accent/10' : 'border border-primary/20 bg-primary/[.04]')} data-testid={result.guidance.status === 'verification_required' ? 'agent-verification-required' : 'agent-guidance'}><p className="text-sm font-extrabold">{result.guidance.title}</p><p className="mt-1 text-sm leading-5">{result.guidance.message}</p><p className="mt-2 text-xs font-semibold">{result.guidance.next_step}</p></div>
+          {result.service_ids.length > 0 && <div className="grid gap-2">{result.service_ids.map((id) => { const service = services.data?.find((item) => item.id === id); return <div key={id} className="rounded-xl border border-border bg-card p-3" data-testid={`card-agent-service-${id}`}><Link href={`/services/${id}`} className="flex items-center justify-between text-sm font-bold hover:text-primary" data-testid={`link-agent-service-${id}`}><span>{service?.name || id}</span><ArrowRight size={15} className="text-primary" /></Link>{service && <SourceSummary service={service} compact />}</div>; })}</div>}
+          {result.service_ids.length === 0 && <p className="rounded-xl border border-border bg-card p-3 text-xs leading-5 text-muted-foreground" data-testid="agent-no-matches">No verified service record matched. Demo records are excluded from recommendations.</p>}
+          {result.requirement_checks.length > 0 && <div className="rounded-xl border border-border bg-card p-4"><h4 className="text-xs font-extrabold uppercase tracking-wide">Requirements from verified records</h4><div className="mt-2 space-y-2">{result.requirement_checks.map((item) => <div key={item.requirement} className="flex items-start justify-between gap-3 text-sm"><span>{item.requirement}</span><span className="shrink-0 text-xs font-bold text-muted-foreground">{item.status === 'provided' ? 'Provided' : 'Not provided'}</span></div>)}</div></div>}
+          <div className="rounded-xl border border-border bg-card p-4"><h4 className="text-xs font-extrabold uppercase tracking-wide">Document status</h4><div className="mt-3 grid gap-3 sm:grid-cols-2">{documentGroups.map((group) => <div key={group.label}><p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{group.label}</p>{group.items.length ? <ul className="mt-1 space-y-1 text-xs">{group.items.map((item) => <li key={`${group.label}-${item}`}>{item}</li>)}</ul> : <p className="mt-1 text-xs text-muted-foreground">None identified</p>}</div>)}</div><p className="mt-3 text-[11px] text-muted-foreground">Status is based only on what you stated; SEVA does not verify document validity.</p>{!result.service_ids.length && <p className="mt-1 text-[11px] text-muted-foreground">Required documents are unknown until a verified service record is available.</p>}</div>
+          <div className="rounded-xl bg-secondary/70 p-4"><p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Next incomplete step · {result.follow_up.current_stage}</p><p className="mt-1 text-sm font-bold">{result.follow_up.next_incomplete_step}</p></div>
+          {result.intent.missing_information.length > 0 && <div className="border-t border-border pt-3"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">May need clarification</p><div className="mt-2 flex flex-wrap gap-2">{result.intent.missing_information.map((item) => <span key={item} className="rounded-lg bg-accent/20 px-2.5 py-1.5 text-xs font-semibold">{item}</span>)}</div></div>}
+        </div>}
+      </section>
+      <section className="rounded-[24px] border border-card-border bg-card p-6 sm:p-8">
+        <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-muted-foreground">Agent activity</p><h2 className="mt-1 font-display text-xl font-extrabold">{analyze.isPending ? 'Working through the request' : session.data?.status ?? 'Ready when you are'}</h2></div><span className={cx('grid size-10 place-items-center rounded-xl', analyze.isPending ? 'bg-accent/25 text-foreground' : 'bg-primary/10 text-primary')}><ActivityIcon size={18} /></span></div>
+        {session.data?.current_task && <p className="mt-2 text-xs text-muted-foreground">{session.data.current_task}</p>}
+        <QueryState loading={session.isLoading} error={session.error} onRetry={() => session.refetch()} label="agent activity"><div className="mt-6 space-y-0">{agentEvents.map((event, index) => <div key={event.id} className="relative flex gap-3 pb-6 last:pb-0"><div className="relative z-10 grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-primary">{eventIcon(event.status)}</div>{index < agentEvents.length - 1 && <div className="absolute left-3.5 top-7 h-[calc(100%-12px)] w-px bg-border" />}<div><p className="text-sm font-bold">{agentEventTitle(event.label)}</p><p className="mt-1 text-xs text-muted-foreground">{event.status === 'complete' ? 'Complete' : event.status}</p></div></div>)}{!agentEvents.length && <EmptyState icon={Sparkles} title="Agent is standing by" body="Your request will appear as a clear activity trail here." />}</div></QueryState>
+        <p className="mt-5 border-t border-border pt-4 text-[11px] leading-5 text-muted-foreground">Activity shows only safe workflow events. It does not include hidden reasoning or the raw request text.</p>
+      </section>
+    </div>
+  </div>;
 }
 
 function Notifications() {
